@@ -1,0 +1,34 @@
+{
+  "name": "NutriTrack - Nutrition Tracker",
+  "short_name": "NutriTrack",
+  "description": "Photography and nutrition tracking app with calorie calculator",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["health", "lifestyle", "utilities"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Take Photo",
+      "short_name": "Camera",
+      "description": "Open camera to capture food photo",
+      "url": "/?action=camera"
+    },
+    {
+      "name": "Add Entry",
+      "short_name": "Calculator",
+      "description": "Add nutrition entry manually",
+      "url": "/?action=calculator"
+    }
+  ]
+}
