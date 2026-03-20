@@ -1,28 +1,45 @@
-import { useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { NutritionEntry } from "../types/nutrition";
 import { Card } from "./ui/card";
 import { ScrollArea } from "./ui/scroll-area";
 import { Separator } from "./ui/separator";
-import { X } from "lucide-react";
+import { X, Trash2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { CalendarSyncButton } from "./calendar-sync-button";
-import { getTodayDateString } from "../utils/date-helpers";
+import { getTodayDateString, getMillisecondsUntilMidnight } from "../utils/date-helpers";
 
 interface NutritionSidebarProps {
   entries: NutritionEntry[];
   isOpen: boolean;
   onClose: () => void;
+  onClearAll: () => void; // This is the "Signal" to the parent
   isCalendarAuthenticated?: boolean;
 }
 
-export function NutritionSidebar({ entries, isOpen, onClose, isCalendarAuthenticated }: NutritionSidebarProps) {
-  // 1. Filter for today's entries only
-  const todayEntries = useMemo(() => {
-    const today = getTodayDateString();
-    return entries.filter(entry => entry.date === today);
-  }, [entries]);
+export function NutritionSidebar({ 
+  entries, 
+  isOpen, 
+  onClose, 
+  onClearAll, 
+  isCalendarAuthenticated 
+}: NutritionSidebarProps) {
+  const [today, setToday] = useState(getTodayDateString());
 
-  // 2. Calculate Totals (Ensuring numeric conversion to prevent string concatenation)
+  // Auto-refresh the "Today" string at midnight
+  useEffect(() => {
+    const msUntilMidnight = getMillisecondsUntilMidnight();
+    const timer = setTimeout(() => {
+      setToday(getTodayDateString());
+    }, msUntilMidnight + 1000);
+    return () => clearTimeout(timer);
+  }, [today]);
+
+  // Filter items for the reactive "today" date
+  const todayEntries = useMemo(() => {
+    return entries.filter(entry => entry.date === today);
+  }, [entries, today]);
+
+  // Totals calculation
   const totals = useMemo(() => {
     return todayEntries.reduce(
       (acc, entry) => ({
@@ -35,30 +52,26 @@ export function NutritionSidebar({ entries, isOpen, onClose, isCalendarAuthentic
     );
   }, [todayEntries]);
 
+  // The local handler that asks for permission before signaling the parent
+  const handleClearAll = () => {
+    if (window.confirm("Are you sure you want to clear all entries for today? This cannot be undone.")) {
+      onClearAll(); // This triggers the function in the Parent
+    }
+  };
+
   return (
     <>
-      {/* Overlay for mobile */}
       {isOpen && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-          onClick={onClose}
-        />
+        <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={onClose} />
       )}
       
-      <div 
-        className={`fixed lg:relative w-80 bg-background border-r border-border h-screen flex flex-col z-50 transition-transform duration-300 ${
-          isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-        }`}
-      >
-        <div className="p-6">
+      <div className={`fixed lg:relative w-80 bg-background border-r border-border h-screen flex flex-col z-50 transition-transform duration-300 ${
+        isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+      }`}>
+        <div className="p-6 pb-4">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold">Daily Summary</h2>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onClose}
-              className="lg:hidden"
-            >
+            <Button variant="ghost" size="icon" onClick={onClose} className="lg:hidden">
               <X className="h-5 w-5" />
             </Button>
           </div>
@@ -82,11 +95,7 @@ export function NutritionSidebar({ entries, isOpen, onClose, isCalendarAuthentic
             <div className="mt-4">
               <CalendarSyncButton
                 calorieCount={totals.calories}
-                macros={{
-                  fat: totals.fat,
-                  carbs: totals.carbs,
-                  protein: totals.protein,
-                }}
+                macros={{ fat: totals.fat, carbs: totals.carbs, protein: totals.protein }}
               />
             </div>
           )}
@@ -96,33 +105,41 @@ export function NutritionSidebar({ entries, isOpen, onClose, isCalendarAuthentic
           <h3 className="text-sm font-semibold text-muted-foreground">Today's Entries</h3>
         </div>
 
-        <ScrollArea className="flex-1 px-6 pb-6">
-          <div className="space-y-3">
+        <ScrollArea className="flex-1 px-6">
+          <div className="space-y-3 pb-6">
             {todayEntries.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">
-                No entries for today.
-              </p>
+              <p className="text-sm text-muted-foreground text-center py-8">No entries for today.</p>
             ) : (
-              // Using todayEntries here ensures the list matches the summary totals
-              todayEntries.map((entry) => (
-                <EntryCard key={entry.id} entry={entry} />
-              ))
+              todayEntries.map((entry) => <EntryCard key={entry.id} entry={entry} />)
             )}
           </div>
         </ScrollArea>
+
+        {/* Clear All Section */}
+        {todayEntries.length > 0 && (
+          <div className="p-6 border-t border-border bg-background">
+            <Button 
+              variant="outline" 
+              className="w-full text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/20"
+              onClick={handleClearAll}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Clear Today's Log
+            </Button>
+          </div>
+        )}
       </div>
     </>
   );
 }
 
+// ... MacroItem and EntryCard components remain the same as previous
 function MacroItem({ label, value, unit, color }: { label: string; value: number; unit: string; color: string }) {
   return (
     <div className="flex items-center gap-3">
       <div className={`w-3 h-3 rounded-full ${color}`} />
       <span className="text-sm flex-1">{label}</span>
-      <span className="font-semibold">
-        {value}{unit}
-      </span>
+      <span className="font-semibold">{value}{unit}</span>
     </div>
   );
 }
@@ -133,11 +150,7 @@ function EntryCard({ entry }: { entry: NutritionEntry }) {
       <div className="flex gap-3">
         {entry.photo && (
           <div className="w-16 h-16 rounded-md overflow-hidden flex-shrink-0">
-            <img
-              src={entry.photo}
-              alt={entry.name}
-              className="w-full h-full object-cover"
-            />
+            <img src={entry.photo} alt={entry.name} className="w-full h-full object-cover" />
           </div>
         )}
         <div className="flex-1 min-w-0">

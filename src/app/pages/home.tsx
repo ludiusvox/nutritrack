@@ -63,13 +63,19 @@ export function Home() {
     { fat: 0, carbs: 0, protein: 0, calories: 0 }
   );
 
+  // --- NEW: CLEAR HANDLER ---
+  const handleClearToday = () => {
+    const today = getTodayDateString();
+    setEntries((prev) => prev.filter((entry) => entry.date !== today));
+    toast.success("Today's entries cleared");
+  };
+
   // Automatic midnight sync and reset
   useEffect(() => {
     const syncAtMidnight = async () => {
       const lastSync = localStorage.getItem(LAST_SYNC_KEY);
       const today = getTodayDateString();
 
-      // If we haven't synced today and auto-sync is enabled
       if (lastSync !== today && autoSyncEnabled && isSignedIn() && todayTotals.calories > 0) {
         try {
           const yesterday = new Date();
@@ -95,22 +101,18 @@ export function Home() {
       }
     };
 
-    // Check immediately on mount
     syncAtMidnight();
 
-    // Set up midnight timer
     const scheduleNextMidnight = () => {
       const msUntilMidnight = getMillisecondsUntilMidnight();
       
       return setTimeout(() => {
         syncAtMidnight();
-        // Schedule the next midnight check
         scheduleNextMidnight();
       }, msUntilMidnight);
     };
 
     const timer = scheduleNextMidnight();
-
     return () => clearTimeout(timer);
   }, [autoSyncEnabled, todayTotals, isCalendarAuthenticated]);
 
@@ -135,15 +137,17 @@ export function Home() {
 
     setEntries((prev) => [newEntry, ...prev]);
     setCurrentPhoto(null);
+    toast.success(`${data.name} added!`);
   };
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
-      <Toaster />
+      <Toaster position="top-center" />
       <NutritionSidebar 
         entries={entries} 
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
+        onClearAll={handleClearToday} // <--- PASSED PROP HERE
         isCalendarAuthenticated={isCalendarAuthenticated}
       />
       
