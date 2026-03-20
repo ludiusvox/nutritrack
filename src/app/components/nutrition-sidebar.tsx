@@ -16,19 +16,20 @@ interface NutritionSidebarProps {
 }
 
 export function NutritionSidebar({ entries, isOpen, onClose, isCalendarAuthenticated }: NutritionSidebarProps) {
-  // Filter for today's entries only
+  // 1. Filter for today's entries only
   const todayEntries = useMemo(() => {
     const today = getTodayDateString();
     return entries.filter(entry => entry.date === today);
   }, [entries]);
 
+  // 2. Calculate Totals (Ensuring numeric conversion to prevent string concatenation)
   const totals = useMemo(() => {
     return todayEntries.reduce(
       (acc, entry) => ({
-        fat: acc.fat + entry.fat,
-        carbs: acc.carbs + entry.carbs,
-        protein: acc.protein + entry.protein,
-        calories: acc.calories + entry.calories,
+        fat: acc.fat + (Number(entry.fat) || 0),
+        carbs: acc.carbs + (Number(entry.carbs) || 0),
+        protein: acc.protein + (Number(entry.protein) || 0),
+        calories: acc.calories + (Number(entry.calories) || 0),
       }),
       { fat: 0, carbs: 0, protein: 0, calories: 0 }
     );
@@ -92,17 +93,18 @@ export function NutritionSidebar({ entries, isOpen, onClose, isCalendarAuthentic
         </div>
 
         <div className="px-6 pb-2">
-          <h3 className="text-sm font-semibold text-muted-foreground">Recent Entries</h3>
+          <h3 className="text-sm font-semibold text-muted-foreground">Today's Entries</h3>
         </div>
 
         <ScrollArea className="flex-1 px-6 pb-6">
           <div className="space-y-3">
-            {entries.length === 0 ? (
+            {todayEntries.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-8">
-                No entries yet. Start by taking a photo or adding manually.
+                No entries for today.
               </p>
             ) : (
-              entries.map((entry) => (
+              // Using todayEntries here ensures the list matches the summary totals
+              todayEntries.map((entry) => (
                 <EntryCard key={entry.id} entry={entry} />
               ))
             )}
