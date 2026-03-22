@@ -7,7 +7,7 @@ NutriTrack is a streamlined utility designed to help users track their daily nut
 ## App Walkthrough
 
 <p align="center">
-  <video src="https://github.com/user-attachments/assets/5888e2ca-090c-4033-8991-8939c87d4692" width="100%" controls>
+  <video src="https://github.com/user-attachments/assets/5888e2ca-090c-4033-8991-8939c87d4692#.mp4" width="100%" controls>
   </video>
 </p>
 
