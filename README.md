@@ -6,10 +6,9 @@ NutriTrack is a streamlined utility designed to help users track their daily nut
 
 ## App Walkthrough
 
-<p align="center">
-  <video src="https://github.com/user-attachments/assets/5888e2ca-090c-4033-8991-8939c87d4692#.mp4" width="100%" controls>
-  </video>
-</p>
+[![NutriTrack Demo Walkthrough](https://raw.githubusercontent.com/ludiusvox/nutritrack/master/app/src/main/res/drawable/ic_launcher_foreground.png)](https://github.com/ludiusvox/nutritrack/issues/2#issuecomment-2736413206)
+
+> **[Click here to watch the full Video Demo](https://github.com/ludiusvox/nutritrack/issues/2#issuecomment-2736413206)**
 
 ---
 
