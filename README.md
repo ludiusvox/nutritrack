@@ -4,6 +4,11 @@ NutriTrack is a streamlined utility designed to help users track their daily nut
 App Walkthrough
 Below is a demonstration of the NutriTrack interface, covering the camera permission flow, manual macro entry, and the Google Calendar configuration UI.
 
+<p align="center">
+  <video src="https://github.com/user-attachments/assets/5888e2ca-090c-4033-8991-8939c87d4692" width="100%" controls>
+    Your browser does not support the video tag.
+  </video>
+</p>
 
 Key Features
 Camera Integration: Capture photos of meals directly within the app to maintain a visual food diary.
