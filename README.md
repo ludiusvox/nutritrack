@@ -38,3 +38,4 @@ For personalized targets, it is recommended to use an external professional reso
 ## Usage Tips
 * **Manual Entries:** Enter macros in the Calculator tab and hit **Add Entry** to update your Daily Summary.
 * **Scannability:** Use the side drawer to quickly check your progress against your daily limits.
+* **Reset:** The total resets at midnight every night
