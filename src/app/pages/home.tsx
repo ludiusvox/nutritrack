@@ -12,6 +12,7 @@ import { Toaster } from "../components/ui/sonner";
 import { toast } from "sonner";
 import { getTodayDateString, getMillisecondsUntilMidnight } from "../utils/date-helpers";
 import { createCalendarEvent, isSignedIn } from "../utils/google-calendar";
+import { BmrCalculator } from "../components/bmr-calculator";
 
 const STORAGE_KEY = "nutrition-entries";
 const LAST_SYNC_KEY = "last-calendar-sync";
@@ -63,19 +64,13 @@ export function Home() {
     { fat: 0, carbs: 0, protein: 0, calories: 0 }
   );
 
-  // --- NEW: CLEAR HANDLER ---
-  const handleClearToday = () => {
-    const today = getTodayDateString();
-    setEntries((prev) => prev.filter((entry) => entry.date !== today));
-    toast.success("Today's entries cleared");
-  };
-
   // Automatic midnight sync and reset
   useEffect(() => {
     const syncAtMidnight = async () => {
       const lastSync = localStorage.getItem(LAST_SYNC_KEY);
       const today = getTodayDateString();
 
+      // If we haven't synced today and auto-sync is enabled
       if (lastSync !== today && autoSyncEnabled && isSignedIn() && todayTotals.calories > 0) {
         try {
           const yesterday = new Date();
@@ -99,20 +94,38 @@ export function Home() {
           toast.error("Failed to auto-sync to calendar");
         }
       }
+
+      // Clear old entries (not from today)
+      if (lastSync !== today) {
+        const todayDate = getTodayDateString();
+        setEntries(prevEntries => {
+          const todayEntries = prevEntries.filter(entry => entry.date === todayDate);
+          // If we have old entries, show a notification
+          if (todayEntries.length < prevEntries.length) {
+            toast.info("Daily reset complete! Yesterday's entries cleared.");
+          }
+          return todayEntries;
+        });
+        localStorage.setItem(LAST_SYNC_KEY, today);
+      }
     };
 
+    // Check immediately on mount
     syncAtMidnight();
 
+    // Set up midnight timer
     const scheduleNextMidnight = () => {
       const msUntilMidnight = getMillisecondsUntilMidnight();
       
       return setTimeout(() => {
         syncAtMidnight();
+        // Schedule the next midnight check
         scheduleNextMidnight();
       }, msUntilMidnight);
     };
 
     const timer = scheduleNextMidnight();
+
     return () => clearTimeout(timer);
   }, [autoSyncEnabled, todayTotals, isCalendarAuthenticated]);
 
@@ -137,17 +150,15 @@ export function Home() {
 
     setEntries((prev) => [newEntry, ...prev]);
     setCurrentPhoto(null);
-    toast.success(`${data.name} added!`);
   };
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
-      <Toaster position="top-center" />
+      <Toaster />
       <NutritionSidebar 
         entries={entries} 
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
-        onClearAll={handleClearToday} // <--- PASSED PROP HERE
         isCalendarAuthenticated={isCalendarAuthenticated}
       />
       
@@ -172,9 +183,10 @@ export function Home() {
         <main className="flex-1 overflow-auto p-6">
           <div className="max-w-4xl mx-auto">
             <Tabs defaultValue="camera" className="w-full">
-              <TabsList className="grid w-full grid-cols-3 mb-6">
+              <TabsList className="grid w-full grid-cols-4 mb-6">
                 <TabsTrigger value="camera">Camera</TabsTrigger>
                 <TabsTrigger value="calculator">Calculator</TabsTrigger>
+                <TabsTrigger value="bmr">BMR Calc</TabsTrigger>
                 <TabsTrigger value="calendar">Calendar</TabsTrigger>
               </TabsList>
 
@@ -184,6 +196,10 @@ export function Home() {
 
               <TabsContent value="calculator">
                 <Calculator onAdd={handleAddEntry} currentPhoto={currentPhoto} />
+              </TabsContent>
+
+              <TabsContent value="bmr">
+                <BmrCalculator />
               </TabsContent>
 
               <TabsContent value="calendar">

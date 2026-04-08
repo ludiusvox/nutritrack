@@ -6,46 +6,67 @@ Your NutriTrack app now includes:
 
 ✅ **Automatic Midnight Reset** - Daily calorie totals reset at midnight  
 ✅ **Automatic Calendar Sync** - Daily totals uploaded to Google Calendar at midnight  
+✅ **Complete Data Clear** - All yesterday's entries are deleted at midnight  
 ✅ **Today's View** - Sidebar shows only today's nutrition entries
 
 ## How It Works
 
 ### 📊 Daily Totals
 
-**Before**: All entries were summed together forever  
 **Now**: Only today's entries count toward your daily totals
 
 - The sidebar shows "Daily Summary" with **today's totals only**
 - At midnight, the totals automatically reset to 0
-- Previous days' entries are saved but don't count toward today
+- **All previous days' entries are permanently deleted**
+- You start fresh every day
 
-### 🕛 Automatic Midnight Sync
+### 🕛 Automatic Midnight Reset & Clear
 
-When enabled:
-1. **At midnight**, the app automatically uploads yesterday's nutrition totals to Google Calendar
-2. A calendar event is created with:
-   - **Total calories** for the day
-   - **Macro breakdown** (fat, carbs, protein)
-   - Timestamp showing when it was synced
-3. You'll see a success notification if sync completes
+**What Happens at Midnight**:
+
+1. **If auto-sync is enabled**:
+   - Yesterday's nutrition totals upload to Google Calendar
+   - Calendar event created with all macros
+   
+2. **Data is cleared**:
+   - All entries from yesterday are **permanently deleted**
+   - LocalStorage is cleared of old entries
+   - Sidebar resets to 0 calories
+   - "Recent Entries" list is empty
+
+3. **Fresh Start**:
+   - You begin the new day with a clean slate
+   - No clutter from previous days
+   - Only today's entries will be visible
 
 ### 🔧 How to Enable Auto-Sync
 
 1. **Go to Calendar tab**
 2. **Sign in with Google** (if not already signed in)
-3. **Toggle "Automatic Midnight Sync"** switch to ON
+3. **Toggle "Automatic Midnight Sync"** ON
 4. That's it! 
 
-The app will now automatically sync at midnight every day.
+The app will now automatically:
+- Sync yesterday's data to calendar at midnight
+- Clear all old entries
+- Reset daily totals to 0
 
 ## Important Notes
 
+### ⚠️ Data is Deleted Daily
+
+**Important**: At midnight, **all previous entries are permanently deleted** from your device.
+
+- ✅ If auto-sync is enabled: Data is saved to Google Calendar first
+- ❌ If auto-sync is disabled: Yesterday's data is lost forever
+- 💡 **Recommendation**: Enable auto-sync to keep historical records
+
 ### ⚠️ App Must Be Running
 
-For auto-sync to work at midnight:
+For midnight reset to work:
 - ✅ The app must be **open** or **running in background**
-- ✅ Your phone must have **internet connection**
-- ✅ You must be **signed in to Google Calendar**
+- ✅ Your phone must have **internet connection** (for sync)
+- ✅ You must be **signed in to Google Calendar** (for sync)
 
 **On Termux**: 
 ```bash
@@ -59,9 +80,9 @@ npm run dev
 ### 📱 What Happens If App Is Closed?
 
 If the app is closed at midnight:
-- Auto-sync **will not run** for that day
-- You can still **manually sync** using the "Sync to Google Calendar" button in the sidebar
-- Auto-sync will resume the next day when the app is running
+- Reset happens when you **next open the app**
+- Old entries are cleared on first load of the new day
+- Auto-sync will still attempt (if data exists)
 
 ### 🔄 Manual Sync
 
@@ -69,6 +90,50 @@ You can **always manually sync** even with auto-sync enabled:
 1. Open the sidebar (left panel)
 2. Click **"Sync to Google Calendar"** button
 3. This syncs **today's** current totals immediately
+4. **Does not clear entries** - only manual sync
+
+## Data Flow
+
+### Timeline Example
+
+**11:30 PM - Tuesday**:
+```
+Entries in app:
+- Breakfast: 400 cal
+- Lunch: 650 cal
+- Dinner: 800 cal
+Total: 1,850 cal
+```
+
+**12:00 AM - Wednesday** (Midnight):
+```
+1. Auto-sync uploads Tuesday's data to calendar
+2. All Tuesday entries deleted from device
+3. Daily totals reset to 0
+4. Notification: "Daily reset complete!"
+```
+
+**12:01 AM - Wednesday**:
+```
+Entries in app: (empty)
+Total: 0 cal
+Fresh start for Wednesday!
+```
+
+### Google Calendar Record
+
+Your calendar will have:
+```
+Date: Tuesday, April 8, 2026
+Title: Daily Nutrition - 1,850 calories
+
+Total Calories: 1,850
+Fat: 65g
+Carbs: 185g
+Protein: 145g
+
+Automatically synced at midnight
+```
 
 ## Data Storage
 
@@ -76,149 +141,170 @@ You can **always manually sync** even with auto-sync enabled:
 
 The app uses these localStorage keys:
 
-- `nutrition-entries` - All your nutrition entries (past and present)
-- `last-calendar-sync` - Date of last automatic sync
+- `nutrition-entries` - **Today's entries only** (cleared at midnight)
+- `last-calendar-sync` - Date of last automatic sync/reset
 - `auto-sync-enabled` - Auto-sync on/off preference
 - `google-calendar-config` - Your Google API credentials
 
-### Entry Structure
+### Entry Lifecycle
 
-Each entry now includes:
-```typescript
-{
-  id: "1234567890",
-  name: "Breakfast",
-  fat: 10,
-  carbs: 45,
-  protein: 20,
-  calories: 350,
-  photo: "data:image/...",
-  timestamp: 1234567890123,
-  date: "2026-03-19" // NEW: ISO date for daily filtering
-}
+```
+Created → Stored → Displayed → Midnight → Synced → Deleted
+                                    ↓
+                          Google Calendar (permanent)
 ```
 
-## Technical Details
+## Why This Design?
 
-### Midnight Detection
+### Benefits of Daily Reset
 
-The app uses a smart timer system:
-1. Calculates milliseconds until next midnight
-2. Sets a timer to trigger at exactly midnight
-3. When timer fires:
-   - Checks if yesterday's data needs syncing
-   - Uploads to Google Calendar if auto-sync is enabled
-   - Reschedules for next midnight
+1. **Clean Interface**: No clutter from past days
+2. **Performance**: Less data = faster app
+3. **Privacy**: Old data not stored on device
+4. **Focus**: See only today's progress
+5. **Simple**: One day at a time approach
 
-### Date Filtering
+### Historical Data
 
-```typescript
-// Today's date in YYYY-MM-DD format
-const today = getTodayDateString(); // "2026-03-19"
+- **In Google Calendar**: All past days preserved
+- **On Device**: Only today's data
+- **Access History**: View past days in Google Calendar
 
-// Filter entries for today only
-const todayEntries = entries.filter(entry => entry.date === today);
+## Configuration Options
 
-// Calculate today's totals
-const totals = todayEntries.reduce(/* sum macros */);
+### Option 1: Auto-Sync Enabled (Recommended)
+
+```
+✅ Yesterday's data synced to calendar
+✅ Old entries cleared at midnight
+✅ Historical data preserved in calendar
+✅ Clean slate every day
 ```
 
-### Calendar Event Format
+**Best for**: People who want historical tracking
 
-Events created in Google Calendar:
+### Option 2: Auto-Sync Disabled
+
 ```
-Title: Daily Nutrition - 2,150 calories
-
-Description:
-Total Calories: 2,150
-Fat: 75g
-Carbs: 250g
-Protein: 120g
-
-Automatically synced at midnight
+❌ No calendar sync
+✅ Old entries cleared at midnight
+❌ Yesterday's data is lost
+✅ Clean slate every day
 ```
+
+**Best for**: People who only track current day
 
 ## Troubleshooting
 
-### Auto-sync not working?
+### Data disappeared?
 
 **Check:**
-1. ✅ Is auto-sync toggle **ON** in Calendar tab?
-2. ✅ Are you **signed in** to Google Calendar?
-3. ✅ Is the app **running**?
-4. ✅ Did you have **entries** from yesterday?
-5. ✅ Check console for errors (F12 → Console)
+1. ✅ Did midnight pass?
+2. ✅ This is expected behavior
+3. ✅ Check Google Calendar for history (if auto-sync enabled)
 
-### Totals not resetting?
+### Want to keep entries longer?
+
+**Solutions:**
+1. **Enable auto-sync** - Saves to calendar before deleting
+2. **Manual sync** - Sync before midnight if app will be closed
+3. **Export manually** - Copy data from localStorage before midnight
+
+### Reset not happening?
 
 **Fix:**
 1. Refresh the page
-2. Check if entries have `date` field
-3. Old entries might be missing the `date` field - they won't show in today's totals
+2. Check console for errors (F12 → Console)
+3. Verify app was running at midnight
+4. Check `last-calendar-sync` date in localStorage
 
-### Want to view previous days?
+### Accidentally cleared?
 
-Currently, the sidebar shows **all entries** in "Recent Entries" section, but only **today's entries** count toward the daily total.
+**Recovery:**
+- ❌ Cannot recover from device (deleted)
+- ✅ Check Google Calendar if auto-sync was enabled
+- 💡 Data is permanently deleted at midnight
 
-**Future enhancement**: Add a calendar view to see past days' totals.
+## Advanced: Disable Auto-Clear
 
-## Configuration
+If you want to keep historical entries on device:
 
-### Disable Auto-Sync
-
-1. Go to **Calendar tab**
-2. Toggle **"Automatic Midnight Sync"** to OFF
-3. Your daily totals will still reset, but won't upload to calendar
-
-### Change Sync Time
-
-Currently fixed to midnight. To change:
-1. Edit `/src/app/utils/date-helpers.ts`
-2. Modify `getMillisecondsUntilMidnight()` function
-
-### Delete Old Entries
-
-To clear old entries:
-1. Open browser console (F12)
-2. Run: `localStorage.removeItem('nutrition-entries')`
-3. Refresh page
-
-## Privacy & Data
-
-- ✅ All data stored **locally** on your device (localStorage)
-- ✅ Only synced to **your Google Calendar** when you enable it
-- ✅ No third-party servers
-- ✅ You control when data is synced
-
-## Tips
-
-### For Best Results:
-
-1. **Enable auto-sync** if you track nutrition daily
-2. **Keep app running** in background on your phone
-3. **Use manual sync** if you forget to open the app at midnight
-4. **Check Calendar tab** to verify sync status
-
-### Battery Optimization
-
-On Android:
-1. Go to **Settings → Apps → Chrome (or your browser)**
-2. **Battery → Unrestricted**
-3. This prevents Android from killing the app at night
-
-### Termux Users
-
-```bash
-# Start app and prevent sleep
-termux-wake-lock
-npm run dev
-
-# Optional: Set up cron job for daily restart
-# (Advanced - see Termux documentation)
+1. **Edit** `/src/app/pages/home.tsx`
+2. **Comment out** the entry clearing code:
+```typescript
+// Clear old entries (not from today)
+// if (lastSync !== today) {
+//   const todayDate = getTodayDateString();
+//   setEntries(prevEntries => {
+//     const todayEntries = prevEntries.filter(entry => entry.date === todayDate);
+//     return todayEntries;
+//   });
+// }
 ```
+
+**Note**: Sidebar will still show only today's totals, but "Recent Entries" will show all history.
+
+## Best Practices
+
+### Daily Tracking Routine
+
+**Morning**:
+1. Open app (yesterday's data auto-cleared)
+2. Check Google Calendar to review yesterday
+3. Start adding today's meals
+
+**Throughout Day**:
+1. Add entries after each meal
+2. Monitor progress in sidebar
+3. Stay on track with targets
+
+**Evening**:
+1. Review day's totals
+2. Manually sync if desired
+3. Leave app running overnight for auto-sync
+
+### Data Management
+
+1. **Enable auto-sync**: Never lose historical data
+2. **Keep app running**: Ensure midnight sync works
+3. **Review calendar weekly**: Track long-term trends
+4. **Backup credentials**: Save API keys safely
+
+## Privacy & Storage
+
+### Device Storage
+
+- **Only today's data** stored on device
+- **Minimal storage** used (KB, not MB)
+- **Automatic cleanup** every night
+- **No data accumulation**
+
+### Google Calendar
+
+- **Your data only** (not shared)
+- **Your calendar** (under your control)
+- **Can delete** past events anytime
+- **OAuth secured** connection
 
 ---
 
-**Enjoy automatic nutrition tracking!** 🎉
+## Summary
 
-Your daily totals now reset at midnight and automatically sync to Google Calendar, making long-term tracking effortless.
+🕛 **At midnight every day**:
+1. Yesterday's totals sync to Google Calendar (if enabled)
+2. All old entries deleted from device
+3. Daily totals reset to 0
+4. You start fresh
+
+✅ **Benefits**:
+- Clean interface
+- Fast performance
+- Historical data in calendar
+- Privacy-focused
+
+⚠️ **Remember**:
+- Enable auto-sync to preserve history
+- Keep app running overnight
+- Data deletion is permanent
+
+**Enjoy automatic daily tracking!** 🎉

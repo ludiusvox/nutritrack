@@ -1,14 +1,9 @@
 /**
- * Get today's date in YYYY-MM-DD format (Local Time)
- * Using Intl is cleaner and avoids manual string padding
+ * Get today's date in YYYY-MM-DD format
  */
 export function getTodayDateString(): string {
   const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  
-  return `${year}-${month}-${day}`; 
+  return now.toISOString().split('T')[0];
 }
 
 /**
@@ -16,49 +11,45 @@ export function getTodayDateString(): string {
  */
 export function isToday(timestamp: number): boolean {
   const date = new Date(timestamp);
-  const now = new Date(); // Capture "now" once
+  const today = new Date();
   
   return (
-    date.getDate() === now.getDate() &&
-    date.getMonth() === now.getMonth() &&
-    date.getFullYear() === now.getFullYear()
+    date.getDate() === today.getDate() &&
+    date.getMonth() === today.getMonth() &&
+    date.getFullYear() === today.getFullYear()
   );
 }
 
 /**
  * Get milliseconds until next midnight
- * Handles the "rollover" correctly even during DST changes
  */
 export function getMillisecondsUntilMidnight(): number {
   const now = new Date();
-  const tomorrow = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate() + 1, // This safely handles month/year rollovers
-    0, 0, 0, 0
-  );
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(0, 0, 0, 0);
   
   return tomorrow.getTime() - now.getTime();
 }
 
 /**
- * Format date for display (e.g., "Oct 24, 2023")
+ * Format date for display
  */
 export function formatDate(timestamp: number): string {
-  return new Intl.DateTimeFormat('en-US', {
+  return new Date(timestamp).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric'
-  }).format(new Date(timestamp));
+  });
 }
 
 /**
- * Format time for display (e.g., "1:30 PM")
+ * Format time for display
  */
 export function formatTime(timestamp: number): string {
-  return new Intl.DateTimeFormat('en-US', {
+  return new Date(timestamp).toLocaleTimeString('en-US', {
     hour: 'numeric',
     minute: '2-digit',
     hour12: true
-  }).format(new Date(timestamp));
+  });
 }

@@ -263,9 +263,11 @@ termux-wake-unlock
 
 ✅ Photography app with camera
 ✅ Nutrition calculator
+✅ BMR & Macro calculator (Mifflin St. Jeor equation)
 ✅ Light/dark mode
 ✅ Retractable sidebar
 ✅ Google Calendar sync
+✅ Automatic midnight reset & sync
 ✅ LocalStorage persistence
 ✅ PWA-ready
 ✅ Android APK-ready

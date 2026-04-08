@@ -97,7 +97,7 @@ npx cap sync android
 
 ```bash
 # Install required packages
-pkg install apt apksigner
+pkg install aapt apksigner
 
 # Install Android SDK (very large!)
 pkg install android-sdk
