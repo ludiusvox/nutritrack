@@ -3,26 +3,22 @@ import { Camera } from "../components/camera";
 import { Calculator } from "../components/calculator";
 import { NutritionSidebar } from "../components/nutrition-sidebar";
 import { ThemeToggle } from "../components/theme-toggle";
-import { GoogleCalendarSetup } from "../components/google-calendar-setup";
-import { NutritionEntry } from "../types/nutrition";
+import { NutritionEntry, NutritionTotals } from "../types/nutrition";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Button } from "../components/ui/button";
 import { Menu } from "lucide-react";
 import { Toaster } from "../components/ui/sonner";
 import { toast } from "sonner";
 import { getTodayDateString, getMillisecondsUntilMidnight } from "../utils/date-helpers";
-import { createCalendarEvent, isSignedIn } from "../utils/google-calendar";
 import { BmrCalculator } from "../components/bmr-calculator";
 
 const STORAGE_KEY = "nutrition-entries";
-const LAST_SYNC_KEY = "last-calendar-sync";
 const AUTO_SYNC_ENABLED_KEY = "auto-sync-enabled";
 
 export function Home() {
   const [entries, setEntries] = useState<NutritionEntry[]>([]);
   const [currentPhoto, setCurrentPhoto] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [isCalendarAuthenticated, setIsCalendarAuthenticated] = useState(false);
   const [autoSyncEnabled, setAutoSyncEnabled] = useState(() => {
     const stored = localStorage.getItem(AUTO_SYNC_ENABLED_KEY);
     return stored ? JSON.parse(stored) : false;
@@ -54,71 +50,43 @@ export function Home() {
   const todayEntries = entries.filter(entry => entry.date === getTodayDateString());
 
   // Calculate today's totals
-  const todayTotals = todayEntries.reduce(
+  const todayTotals: NutritionTotals = todayEntries.reduce(
     (acc, entry) => ({
       fat: acc.fat + entry.fat,
       carbs: acc.carbs + entry.carbs,
       protein: acc.protein + entry.protein,
       calories: acc.calories + entry.calories,
+      nicotine: (acc.nicotine || 0) + (entry.nicotine || 0),
+      caffeine: (acc.caffeine || 0) + (entry.caffeine || 0),
     }),
-    { fat: 0, carbs: 0, protein: 0, calories: 0 }
+    { fat: 0, carbs: 0, protein: 0, calories: 0, nicotine: 0, caffeine: 0 }
   );
 
-  // Automatic midnight sync and reset
+  // Automatic midnight reset
   useEffect(() => {
-    const syncAtMidnight = async () => {
-      const lastSync = localStorage.getItem(LAST_SYNC_KEY);
+    const resetAtMidnight = async () => {
       const today = getTodayDateString();
-
-      // If we haven't synced today and auto-sync is enabled
-      if (lastSync !== today && autoSyncEnabled && isSignedIn() && todayTotals.calories > 0) {
-        try {
-          const yesterday = new Date();
-          yesterday.setDate(yesterday.getDate() - 1);
-          
-          await createCalendarEvent(
-            yesterday,
-            todayTotals.calories,
-            {
-              fat: todayTotals.fat,
-              carbs: todayTotals.carbs,
-              protein: todayTotals.protein,
-            },
-            `Automatically synced at midnight`
-          );
-
-          localStorage.setItem(LAST_SYNC_KEY, today);
-          toast.success("Yesterday's nutrition synced to Google Calendar!");
-        } catch (error) {
-          console.error("Failed to auto-sync:", error);
-          toast.error("Failed to auto-sync to calendar");
+      
+      // Clear old entries (not from today) at midnight
+      setEntries(prevEntries => {
+        const todayEntries = prevEntries.filter(entry => entry.date === today);
+        // If we have old entries, show a notification
+        if (todayEntries.length < prevEntries.length) {
+          toast.info("Daily reset complete! Yesterday's entries cleared.");
         }
-      }
-
-      // Clear old entries (not from today)
-      if (lastSync !== today) {
-        const todayDate = getTodayDateString();
-        setEntries(prevEntries => {
-          const todayEntries = prevEntries.filter(entry => entry.date === todayDate);
-          // If we have old entries, show a notification
-          if (todayEntries.length < prevEntries.length) {
-            toast.info("Daily reset complete! Yesterday's entries cleared.");
-          }
-          return todayEntries;
-        });
-        localStorage.setItem(LAST_SYNC_KEY, today);
-      }
+        return todayEntries;
+      });
     };
 
     // Check immediately on mount
-    syncAtMidnight();
+    resetAtMidnight();
 
     // Set up midnight timer
     const scheduleNextMidnight = () => {
       const msUntilMidnight = getMillisecondsUntilMidnight();
       
       return setTimeout(() => {
-        syncAtMidnight();
+        resetAtMidnight();
         // Schedule the next midnight check
         scheduleNextMidnight();
       }, msUntilMidnight);
@@ -127,7 +95,7 @@ export function Home() {
     const timer = scheduleNextMidnight();
 
     return () => clearTimeout(timer);
-  }, [autoSyncEnabled, todayTotals, isCalendarAuthenticated]);
+  }, []);
 
   const handleCapture = (photoUrl: string) => {
     setCurrentPhoto(photoUrl);
@@ -139,6 +107,8 @@ export function Home() {
     carbs: number;
     protein: number;
     calories: number;
+    nicotine?: number;
+    caffeine?: number;
   }) => {
     const newEntry: NutritionEntry = {
       id: Date.now().toString(),
@@ -159,7 +129,7 @@ export function Home() {
         entries={entries} 
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
-        isCalendarAuthenticated={isCalendarAuthenticated}
+        totals={todayTotals}
       />
       
       <div className="flex-1 flex flex-col min-w-0">
@@ -183,11 +153,10 @@ export function Home() {
         <main className="flex-1 overflow-auto p-6">
           <div className="max-w-4xl mx-auto">
             <Tabs defaultValue="camera" className="w-full">
-              <TabsList className="grid w-full grid-cols-4 mb-6">
+              <TabsList className="grid w-full grid-cols-3 mb-6">
                 <TabsTrigger value="camera">Camera</TabsTrigger>
                 <TabsTrigger value="calculator">Calculator</TabsTrigger>
                 <TabsTrigger value="bmr">BMR Calc</TabsTrigger>
-                <TabsTrigger value="calendar">Calendar</TabsTrigger>
               </TabsList>
 
               <TabsContent value="camera">
@@ -200,10 +169,6 @@ export function Home() {
 
               <TabsContent value="bmr">
                 <BmrCalculator />
-              </TabsContent>
-
-              <TabsContent value="calendar">
-                <GoogleCalendarSetup onAuthChange={setIsCalendarAuthenticated} />
               </TabsContent>
             </Tabs>
 

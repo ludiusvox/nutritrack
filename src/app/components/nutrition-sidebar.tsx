@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { NutritionEntry } from "../types/nutrition";
+import { NutritionEntry, NutritionTotals } from "../types/nutrition";
 import { Card } from "./ui/card";
 import { ScrollArea } from "./ui/scroll-area";
 import { Separator } from "./ui/separator";
@@ -13,26 +13,37 @@ interface NutritionSidebarProps {
   isOpen: boolean;
   onClose: () => void;
   isCalendarAuthenticated?: boolean;
+  totals?: NutritionTotals;
 }
 
-export function NutritionSidebar({ entries, isOpen, onClose, isCalendarAuthenticated }: NutritionSidebarProps) {
+export function NutritionSidebar({ 
+  entries, 
+  isOpen, 
+  onClose, 
+  isCalendarAuthenticated,
+  totals
+}: NutritionSidebarProps) {
   // Filter for today's entries only
   const todayEntries = useMemo(() => {
     const today = getTodayDateString();
     return entries.filter(entry => entry.date === today);
   }, [entries]);
 
-  const totals = useMemo(() => {
+  const calculatedTotals = useMemo<NutritionTotals>(() => {
     return todayEntries.reduce(
       (acc, entry) => ({
         fat: acc.fat + entry.fat,
         carbs: acc.carbs + entry.carbs,
         protein: acc.protein + entry.protein,
         calories: acc.calories + entry.calories,
+        nicotine: (acc.nicotine || 0) + (entry.nicotine || 0),
+        caffeine: (acc.caffeine || 0) + (entry.caffeine || 0),
       }),
-      { fat: 0, carbs: 0, protein: 0, calories: 0 }
+      { fat: 0, carbs: 0, protein: 0, calories: 0, nicotine: 0, caffeine: 0 }
     );
   }, [todayEntries]);
+
+  const displayTotals = totals || calculatedTotals;
 
   return (
     <>
@@ -49,65 +60,95 @@ export function NutritionSidebar({ entries, isOpen, onClose, isCalendarAuthentic
           isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold">Daily Summary</h2>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onClose}
-              className="lg:hidden"
-            >
-              <X className="h-5 w-5" />
-            </Button>
+        <div className="flex flex-col h-full">
+          {/* Header */}
+          <div className="p-6 border-b border-border shrink-0">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold">Daily Summary</h2>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onClose}
+                className="lg:hidden"
+              >
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
           </div>
-        
-          <Card className="p-4 bg-primary/5">
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Total Calories</span>
-                <span className="text-2xl font-bold">{totals.calories}</span>
-              </div>
-              <Separator />
-              <div className="space-y-2">
-                <MacroItem label="Fat" value={totals.fat} unit="g" color="bg-red-500" />
-                <MacroItem label="Carbs" value={totals.carbs} unit="g" color="bg-blue-500" />
-                <MacroItem label="Protein" value={totals.protein} unit="g" color="bg-green-500" />
+
+          {/* Scrollable content area */}
+          <ScrollArea className="flex-1 px-6 pb-6 h-[calc(100vh-8rem)]">
+            <div className="space-y-4">
+              <Card className="p-4 bg-primary/5">
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Total Calories</span>
+                    <span className="text-2xl font-bold">{displayTotals.calories}</span>
+                  </div>
+                  <Separator />
+                  <div className="space-y-2">
+                    <MacroItem label="Fat" value={displayTotals.fat} unit="g" color="bg-red-500" />
+                    <MacroItem label="Carbs" value={displayTotals.carbs} unit="g" color="bg-blue-500" />
+                    <MacroItem label="Protein" value={displayTotals.protein} unit="g" color="bg-green-500" />
+                  </div>
+                </div>
+              </Card>
+
+              {displayTotals.nicotine > 0 || displayTotals.caffeine > 0 ? (
+                <Card className="p-4 mt-4 bg-secondary/10">
+                  <h3 className="text-sm font-semibold mb-2">Stimulants</h3>
+                  <div className="space-y-2">
+                    {displayTotals.nicotine > 0 && (
+                      <MacroItem 
+                        label="Nicotine" 
+                        value={displayTotals.nicotine} 
+                        unit="mg" 
+                        color="bg-purple-500" 
+                      />
+                    )}
+                    {displayTotals.caffeine > 0 && (
+                      <MacroItem 
+                        label="Caffeine" 
+                        value={displayTotals.caffeine} 
+                        unit="mg" 
+                        color="bg-yellow-500" 
+                      />
+                    )}
+                  </div>
+                </Card>
+              ) : null}
+
+              {isCalendarAuthenticated && displayTotals.calories > 0 && (
+                <div className="mt-4">
+                  <CalendarSyncButton
+                    calorieCount={displayTotals.calories}
+                    macros={{
+                      fat: displayTotals.fat,
+                      carbs: displayTotals.carbs,
+                      protein: displayTotals.protein,
+                    }}
+                  />
+                </div>
+              )}
+
+              {/* Recent Entries Section */}
+              <div className="pt-4 border-t">
+                <h3 className="text-sm font-semibold text-muted-foreground mb-2">Recent Entries</h3>
+                {todayEntries.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-8">
+                    No entries yet. Start by taking a photo or adding manually.
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    {todayEntries.map((entry) => (
+                      <EntryCard key={entry.id} entry={entry} />
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
-          </Card>
-
-          {isCalendarAuthenticated && totals.calories > 0 && (
-            <div className="mt-4">
-              <CalendarSyncButton
-                calorieCount={totals.calories}
-                macros={{
-                  fat: totals.fat,
-                  carbs: totals.carbs,
-                  protein: totals.protein,
-                }}
-              />
-            </div>
-          )}
+          </ScrollArea>
         </div>
-
-        <div className="px-6 pb-2">
-          <h3 className="text-sm font-semibold text-muted-foreground">Recent Entries</h3>
-        </div>
-
-        <ScrollArea className="flex-1 px-6 pb-6">
-          <div className="space-y-3">
-            {entries.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">
-                No entries yet. Start by taking a photo or adding manually.
-              </p>
-            ) : (
-              entries.map((entry) => (
-                <EntryCard key={entry.id} entry={entry} />
-              ))
-            )}
-          </div>
-        </ScrollArea>
       </div>
     </>
   );
@@ -146,6 +187,16 @@ function EntryCard({ entry }: { entry: NutritionEntry }) {
             <span className="text-muted-foreground">C: {entry.carbs}g</span>
             <span className="text-muted-foreground">P: {entry.protein}g</span>
           </div>
+          {(entry.nicotine || entry.caffeine) && (
+            <div className="flex gap-2 mt-1 text-xs">
+              {entry.nicotine > 0 && (
+                <span className="text-purple-500">N: {entry.nicotine}mg</span>
+              )}
+              {entry.caffeine > 0 && (
+                <span className="text-yellow-500">Caf: {entry.caffeine}mg</span>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </Card>
