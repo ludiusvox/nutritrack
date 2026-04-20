@@ -13,7 +13,7 @@
     </style>
 
     <style name="AppTheme.NoActionBarLauncher" parent="AppTheme.NoActionBar">
-        <item name="android:windowBackground">@drawable/bridge</item>
+        <item name="android:windowBackground">@drawable/splash</item>
     </style>
 
 </resources>
