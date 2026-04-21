@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
 import { Camera as CameraIcon, X, AlertCircle, Info } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
@@ -24,37 +24,23 @@ export function Camera({ onCapture }: CameraProps) {
     try {
       setCameraError(null);
       
-      // Check if getUserMedia is supported
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         setCameraError("generic");
-        alert("Camera not supported in this browser. Please use Chrome, Edge, or Safari.");
         return;
       }
 
-      // Request camera access
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { 
           facingMode: "environment",
-          width: { ideal: 1920 },
-          height: { ideal: 1080 }
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
         },
       });
       
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        streamRef.current = stream;
-
-        // Explicitly call play to handle WebView restrictions
-        try {
-          await videoRef.current.play();
-        } catch (e) {
-          console.error("Video play failed:", e);
-        }
-
-        setIsStreaming(true);
-        setPermissionState("granted");
-        setCameraError(null);
-      }
+      streamRef.current = stream;
+      setIsStreaming(true);
+      setPermissionState("granted");
+      setCameraError(null);
     } catch (error) {
       console.error("Error accessing camera:", error);
       
@@ -88,11 +74,17 @@ export function Camera({ onCapture }: CameraProps) {
       streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     }
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
-    }
     setIsStreaming(false);
   }, []);
+
+  // Effect to attach stream when video element becomes available
+  useEffect(() => {
+    if (isStreaming && streamRef.current && videoRef.current) {
+      const video = videoRef.current;
+      video.srcObject = streamRef.current;
+      video.play().catch(err => console.error("Error playing video:", err));
+    }
+  }, [isStreaming]);
 
   const capturePhoto = useCallback(() => {
     if (videoRef.current && canvasRef.current) {
