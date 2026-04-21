@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router';
+import { createHashRouter } from 'react-router';
 import { WorkoutPage } from './components/workout-page';
 import { RootLayout } from './components/root-layout';
 
@@ -18,7 +18,7 @@ const muscleGroups = [
   'Core',
 ];
 
-export const router = createBrowserRouter([
+export const router = createHashRouter([
   {
     path: '/',
     Component: RootLayout,

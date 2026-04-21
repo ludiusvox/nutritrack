@@ -4,6 +4,7 @@ import App from './app/App';
 import './styles/index.css';
 
 // Register service worker for PWA
+/*
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
@@ -15,6 +16,7 @@ if ('serviceWorker' in navigator) {
       });
   });
 }
+*/
 
 const root = document.getElementById('root');
 

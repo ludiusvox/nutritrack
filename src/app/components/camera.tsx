@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback, useEffect } from "react";
+import { useRef, useState, useCallback } from "react";
 import { Camera as CameraIcon, X, AlertCircle, Info } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
@@ -18,92 +18,39 @@ export function Camera({ onCapture }: CameraProps) {
   const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
   const [cameraError, setCameraError] = useState<CameraError>(null);
   const [permissionState, setPermissionState] = useState<PermissionState>("unknown");
-  const [isInitializing, setIsInitializing] = useState(false);
   const streamRef = useRef<MediaStream | null>(null);
-
-  const stopCamera = useCallback(() => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => {
-        track.stop();
-        // Force track removal for rigid Android WebViews
-        streamRef.current?.removeTrack(track); 
-      });
-      streamRef.current = null;
-    }
-    if (videoRef.current) {
-      videoRef.current.pause();
-      videoRef.current.srcObject = null;
-      videoRef.current.removeAttribute('src'); // Android memory leak fix
-      videoRef.current.load(); 
-    }
-    setIsStreaming(false);
-  }, []);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      stopCamera();
-    };
-  }, [stopCamera]);
 
   const startCamera = useCallback(async () => {
     try {
-      setIsInitializing(true);
       setCameraError(null);
       
+      // Check if getUserMedia is supported
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         setCameraError("generic");
-        alert("Camera API blocked! If using Android Emulator, ensure you access via http://localhost using 'adb reverse tcp:3000 tcp:3000'. http://10.0.2.2 is NOT a secure context.");
-        setIsInitializing(false);
+        alert("Camera not supported in this browser. Please use Chrome, Edge, or Safari.");
         return;
       }
 
-      let stream: MediaStream;
-      
-      try {
-        // Attempt 1: Standard Environment Camera
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: { 
-            facingMode: { ideal: "environment" },
-            width: { ideal: 1920 },
-            height: { ideal: 1080 }
-          },
-          audio: false
-        });
-      } catch (firstError) {
-        console.warn("Environment constraint failed, trying any available video track...", firstError);
-        // Attempt 2: Ultimate Fallback (Essential for Android Studio Emulators)
-        try {
-          stream = await navigator.mediaDevices.getUserMedia({
-            video: true,
-            audio: false
-          });
-        } catch (secondError) {
-          throw secondError; // Pass to main error handler
-        }
-      }
+      // Request camera access
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { 
+          facingMode: "environment",
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
+        },
+      });
       
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         streamRef.current = stream;
-        
-        // Android WebView specific: Ensure video is ready before playing
-        videoRef.current.onloadedmetadata = async () => {
-          try {
-            await videoRef.current?.play();
-            setIsStreaming(true);
-            setPermissionState("granted");
-            setIsInitializing(false);
-          } catch (e) {
-            console.error("Android playback error:", e);
-            setCameraError("generic");
-            setIsInitializing(false);
-          }
-        };
+        setIsStreaming(true);
+        setPermissionState("granted");
+        setCameraError(null);
       }
     } catch (error) {
       console.error("Error accessing camera:", error);
       
+      // Determine error type
       if (error instanceof DOMException) {
         switch (error.name) {
           case "NotAllowedError":
@@ -125,8 +72,18 @@ export function Camera({ onCapture }: CameraProps) {
       } else {
         setCameraError("generic");
       }
-      setIsInitializing(false);
     }
+  }, []);
+
+  const stopCamera = useCallback(() => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setIsStreaming(false);
   }, []);
 
   const capturePhoto = useCallback(() => {
@@ -134,18 +91,13 @@ export function Camera({ onCapture }: CameraProps) {
       const video = videoRef.current;
       const canvas = canvasRef.current;
       
-      // Android WebViews sometimes report 0 dimensions until actively drawn
-      const width = video.videoWidth || video.clientWidth || 640;
-      const height = video.videoHeight || video.clientHeight || 480;
-      
-      canvas.width = width;
-      canvas.height = height;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
       
       const ctx = canvas.getContext("2d");
       if (ctx) {
-        ctx.drawImage(video, 0, 0, width, height);
-        // Using image/png is often safer on Android WebViews than jpeg to prevent black frames
-        const photoUrl = canvas.toDataURL("image/png"); 
+        ctx.drawImage(video, 0, 0);
+        const photoUrl = canvas.toDataURL("image/jpeg", 0.8);
         setCapturedPhoto(photoUrl);
         stopCamera();
       }
@@ -164,7 +116,6 @@ export function Camera({ onCapture }: CameraProps) {
     startCamera();
   }, [startCamera]);
 
-  // ... (renderErrorMessage function remains exactly the same as your code)
   const renderErrorMessage = () => {
     switch (cameraError) {
       case "permission":
@@ -175,9 +126,17 @@ export function Camera({ onCapture }: CameraProps) {
             <AlertDescription>
               <div className="space-y-2 mt-2">
                 <p>To use the camera feature, you need to grant permission. Please:</p>
-                <div className="mt-3 p-3 bg-red-950/20 rounded-md text-sm border border-red-500/20">
-                  <p className="font-semibold mb-1">Capacitor/Android Users:</p>
-                  <p>You must grant camera permissions in your device's native settings: <strong>Settings → Apps → Your App → Permissions → Camera → Allow</strong></p>
+                <ol className="list-decimal list-inside space-y-1 text-sm">
+                  <li>Click the <strong>lock/info icon</strong> in your browser's address bar</li>
+                  <li>Find <strong>"Camera"</strong> in the permissions list</li>
+                  <li>Change it to <strong>"Allow"</strong></li>
+                  <li>Refresh this page or click "Open Camera" again</li>
+                </ol>
+                <div className="mt-3 p-3 bg-muted rounded-md text-sm">
+                  <p className="font-semibold mb-1">Browser-specific instructions:</p>
+                  <p><strong>Chrome/Edge:</strong> Click 🔒 or ⓘ → Site settings → Camera → Allow</p>
+                  <p><strong>Safari:</strong> Safari menu → Settings for This Website → Camera → Allow</p>
+                  <p><strong>Firefox:</strong> Click 🔒 → More Information → Permissions → Camera → Allow</p>
                 </div>
               </div>
             </AlertDescription>
@@ -189,7 +148,13 @@ export function Camera({ onCapture }: CameraProps) {
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>No Camera Found</AlertTitle>
             <AlertDescription>
-              No camera device was detected. If using an Emulator, check your AVD settings to ensure a camera is enabled (e.g., "VirtualScene").
+              No camera device was detected on your device. Please:
+              <ul className="list-disc list-inside mt-2 space-y-1">
+                <li>Check if your device has a camera</li>
+                <li>Make sure it's not being used by another application</li>
+                <li>Try restarting your browser</li>
+                <li>If using external camera, check the connection</li>
+              </ul>
             </AlertDescription>
           </Alert>
         );
@@ -199,7 +164,7 @@ export function Camera({ onCapture }: CameraProps) {
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Camera Constraint Error</AlertTitle>
             <AlertDescription>
-              Your camera doesn't meet the required specifications. Trying with default settings...
+              Your camera doesn't meet the required specifications. This is usually okay - trying with default settings...
               <Button onClick={startCamera} className="mt-2" variant="outline" size="sm">
                 Try Again
               </Button>
@@ -214,9 +179,10 @@ export function Camera({ onCapture }: CameraProps) {
             <AlertDescription>
               Unable to access the camera. Please:
               <ul className="list-disc list-inside mt-2 space-y-1">
-                <li>Make sure you're using localhost (via adb reverse)</li>
-                <li>Check that no other app is holding the camera open</li>
-                <li>Try restarting the app</li>
+                <li>Make sure you're using HTTPS or localhost</li>
+                <li>Check that no other app is using the camera</li>
+                <li>Try refreshing the page</li>
+                <li>Use a supported browser (Chrome, Edge, Safari, Firefox)</li>
               </ul>
             </AlertDescription>
           </Alert>
@@ -238,32 +204,27 @@ export function Camera({ onCapture }: CameraProps) {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Info message */}
         {!isStreaming && !capturedPhoto && !cameraError && (
           <Alert>
             <Info className="h-4 w-4" />
             <AlertDescription>
-              <strong>First time using camera?</strong> Your device will ask for permission.
+              <strong>First time using camera?</strong> Your browser will ask for permission.
               Make sure to click "Allow" when prompted.
             </AlertDescription>
           </Alert>
         )}
 
+        {/* Error messages */}
         {cameraError && renderErrorMessage()}
         
         <div className="relative bg-black rounded-lg overflow-hidden aspect-[4/3]">
           {!isStreaming && !capturedPhoto && (
             <div className="absolute inset-0 flex items-center justify-center">
-              {isInitializing ? (
-                <div className="text-center space-y-2">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                  <p className="text-sm text-muted-foreground">Starting camera...</p>
-                </div>
-              ) : (
-                <Button onClick={startCamera} size="lg" disabled={isInitializing}>
-                  <CameraIcon className="mr-2 h-5 w-5" />
-                  Open Camera
-                </Button>
-              )}
+              <Button onClick={startCamera} size="lg">
+                <CameraIcon className="mr-2 h-5 w-5" />
+                Open Camera
+              </Button>
             </div>
           )}
 
@@ -272,13 +233,13 @@ export function Camera({ onCapture }: CameraProps) {
               <video
                 ref={videoRef}
                 autoPlay
-                playsInline // Crucial for mobile
+                playsInline
                 muted
                 className="w-full h-full object-cover"
-                style={{ width: '100%', height: '100%' }}
               />
+              {/* UPDATED: Clearer, explicit buttons for taking photos and turning off camera */}
               <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-3 px-4">
-                <Button onClick={capturePhoto} size="lg" className="shadow-lg bg-primary hover:bg-primary/90">
+                <Button onClick={capturePhoto} size="lg" className="shadow-lg">
                   <CameraIcon className="mr-2 h-5 w-5" />
                   Take Photo
                 </Button>
@@ -298,7 +259,7 @@ export function Camera({ onCapture }: CameraProps) {
                 className="w-full h-full object-cover"
               />
               <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-3">
-                <Button onClick={usePhoto} size="lg" className="bg-primary hover:bg-primary/90">
+                <Button onClick={usePhoto} size="lg">
                   Use Photo
                 </Button>
                 <Button onClick={retakePhoto} size="lg" variant="secondary">
@@ -311,6 +272,18 @@ export function Camera({ onCapture }: CameraProps) {
 
         <canvas ref={canvasRef} className="hidden" />
 
+        {/* Additional help text */}
+        {!isStreaming && !capturedPhoto && (
+          <div className="text-sm text-muted-foreground space-y-1">
+            <p><strong>Tips:</strong></p>
+            <ul className="list-disc list-inside space-y-1">
+              <li>Take photos in good lighting for best results</li>
+              <li>Position food items clearly in the frame</li>
+              <li>You can retake photos if needed</li>
+              <li>Photos are stored locally on your device</li>
+            </ul>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
