@@ -43,6 +43,14 @@ export function Camera({ onCapture }: CameraProps) {
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         streamRef.current = stream;
+
+        // Explicitly call play to handle WebView restrictions
+        try {
+          await videoRef.current.play();
+        } catch (e) {
+          console.error("Video play failed:", e);
+        }
+
         setIsStreaming(true);
         setPermissionState("granted");
         setCameraError(null);
