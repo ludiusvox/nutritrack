@@ -5,14 +5,12 @@ import { ScrollArea } from "./ui/scroll-area";
 import { Separator } from "./ui/separator";
 import { X } from "lucide-react";
 import { Button } from "./ui/button";
-import { CalendarSyncButton } from "./calendar-sync-button";
 import { getTodayDateString } from "../utils/date-helpers";
 
 interface NutritionSidebarProps {
   entries: NutritionEntry[];
   isOpen: boolean;
   onClose: () => void;
-  isCalendarAuthenticated?: boolean;
   totals?: NutritionTotals;
 }
 
@@ -20,7 +18,6 @@ export function NutritionSidebar({
   entries, 
   isOpen, 
   onClose, 
-  isCalendarAuthenticated,
   totals
 }: NutritionSidebarProps) {
   // Filter for today's entries only
@@ -117,19 +114,6 @@ export function NutritionSidebar({
                   </div>
                 </Card>
               ) : null}
-
-              {isCalendarAuthenticated && displayTotals.calories > 0 && (
-                <div className="mt-4">
-                  <CalendarSyncButton
-                    calorieCount={displayTotals.calories}
-                    macros={{
-                      fat: displayTotals.fat,
-                      carbs: displayTotals.carbs,
-                      protein: displayTotals.protein,
-                    }}
-                  />
-                </div>
-              )}
 
               {/* Recent Entries Section */}
               <div className="pt-4 border-t">
