@@ -13,16 +13,11 @@ import { getTodayDateString, getMillisecondsUntilMidnight } from "../utils/date-
 import { BmrCalculator } from "../components/bmr-calculator";
 
 const STORAGE_KEY = "nutrition-entries";
-const AUTO_SYNC_ENABLED_KEY = "auto-sync-enabled";
 
 export function Home() {
   const [entries, setEntries] = useState<NutritionEntry[]>([]);
   const [currentPhoto, setCurrentPhoto] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [autoSyncEnabled, setAutoSyncEnabled] = useState(() => {
-    const stored = localStorage.getItem(AUTO_SYNC_ENABLED_KEY);
-    return stored ? JSON.parse(stored) : false;
-  });
 
   // Load entries from localStorage
   useEffect(() => {
@@ -40,11 +35,6 @@ export function Home() {
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
   }, [entries]);
-
-  // Save auto-sync preference
-  useEffect(() => {
-    localStorage.setItem(AUTO_SYNC_ENABLED_KEY, JSON.stringify(autoSyncEnabled));
-  }, [autoSyncEnabled]);
 
   // Get today's entries
   const todayEntries = entries.filter(entry => entry.date === getTodayDateString());
@@ -64,16 +54,11 @@ export function Home() {
 
   // Automatic midnight reset
   useEffect(() => {
-    const resetAtMidnight = async () => {
+    const resetAtMidnight = () => {
       const today = getTodayDateString();
       
-      // Clear old entries (not from today) at midnight
       setEntries(prevEntries => {
         const todayEntries = prevEntries.filter(entry => entry.date === today);
-        // If we have old entries, show a notification
-        if (todayEntries.length < prevEntries.length) {
-          toast.info("Daily reset complete! Yesterday's entries cleared.");
-        }
         return todayEntries;
       });
     };

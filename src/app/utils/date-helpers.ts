@@ -24,12 +24,11 @@ export function isToday(timestamp: number): boolean {
 }
 
 /**
- * Get milliseconds until next midnight
+ * Get milliseconds until next midnight (Local Time)
  */
 export function getMillisecondsUntilMidnight(): number {
   const now = new Date();
-  const tomorrow = new Date(now);
-  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
   tomorrow.setHours(0, 0, 0, 0);
   
   return tomorrow.getTime() - now.getTime();
