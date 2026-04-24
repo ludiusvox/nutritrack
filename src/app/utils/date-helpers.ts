@@ -1,9 +1,12 @@
 /**
- * Get today's date in YYYY-MM-DD format
+ * Get today's date in YYYY-MM-DD format (Local Time)
  */
 export function getTodayDateString(): string {
   const now = new Date();
-  return now.toISOString().split('T')[0];
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 /**
@@ -21,12 +24,11 @@ export function isToday(timestamp: number): boolean {
 }
 
 /**
- * Get milliseconds until next midnight
+ * Get milliseconds until next midnight (Local Time)
  */
 export function getMillisecondsUntilMidnight(): number {
   const now = new Date();
-  const tomorrow = new Date(now);
-  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
   tomorrow.setHours(0, 0, 0, 0);
   
   return tomorrow.getTime() - now.getTime();
