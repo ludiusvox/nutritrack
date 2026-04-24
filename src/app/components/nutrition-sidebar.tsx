@@ -62,7 +62,7 @@ export function NutritionSidebar({
       >
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="p-6 border-b border-border shrink-0">
+          <div className="p-6 pt-[calc(env(safe-area-inset-top)+3rem)] border-b border-border shrink-0">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold">Daily Summary</h2>
               <Button
@@ -71,14 +71,14 @@ export function NutritionSidebar({
                 onClick={onClose}
                 className="lg:hidden"
               >
-                <X className="h-5 w-5" />
+                <X className="h-6 w-6" />
               </Button>
             </div>
           </div>
 
           {/* Scrollable content area */}
-          <ScrollArea className="flex-1 px-6 pb-6 h-[calc(100vh-8rem)]">
-            <div className="space-y-4">
+          <div className="flex-1 overflow-y-auto px-6 pb-10 custom-scrollbar">
+            <div className="space-y-4 pt-4">
               <Card className="p-4 bg-primary/5">
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
@@ -147,7 +147,7 @@ export function NutritionSidebar({
                 )}
               </div>
             </div>
-          </ScrollArea>
+          </div>
         </div>
       </div>
     </>

@@ -133,21 +133,24 @@ export function Home() {
       />
       
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="border-b border-border p-4 flex justify-between items-center">
-          <div className="flex items-center gap-3">
+        <header className="border-b border-border px-4 pb-4 pt-[calc(env(safe-area-inset-top)+3rem)] flex justify-between items-center bg-background/90 backdrop-blur-md sticky top-0 z-10">
+          <div className="flex items-center gap-6 pl-6">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="h-16 w-16 flex items-center justify-center rounded-2xl bg-secondary/40 shadow-sm border border-border/50"
             >
-              <Menu className="h-5 w-5" />
+              <Menu className="h-9 w-9" />
             </Button>
-            <div>
-              <h1 className="text-2xl font-bold">NutriTrack</h1>
-              <p className="text-sm text-muted-foreground">Photography & Nutrition Calculator</p>
+            <div className="flex flex-col justify-center pt-1">
+              <h1 className="text-3xl font-black leading-none tracking-tight">NutriTrack</h1>
+              <p className="text-sm font-medium text-muted-foreground mt-1">Photography & Nutrition Calculator</p>
             </div>
           </div>
-          <ThemeToggle />
+          <div className="pr-8">
+            <ThemeToggle />
+          </div>
         </header>
 
         <main className="flex-1 overflow-auto p-6">
