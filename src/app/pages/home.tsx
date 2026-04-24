@@ -54,16 +54,11 @@ export function Home() {
 
   // Automatic midnight reset
   useEffect(() => {
-    const resetAtMidnight = async () => {
+    const resetAtMidnight = () => {
       const today = getTodayDateString();
       
-      // Clear old entries (not from today) at midnight
       setEntries(prevEntries => {
         const todayEntries = prevEntries.filter(entry => entry.date === today);
-        // If we have old entries, show a notification
-        if (todayEntries.length < prevEntries.length) {
-          toast.info("Daily reset complete! Yesterday's entries cleared.");
-        }
         return todayEntries;
       });
     };
