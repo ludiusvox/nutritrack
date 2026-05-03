@@ -1,0 +1,21 @@
+& {
+    # 1. Direct path to the STX (Ryzen AI Max) acceleration binaries
+    $sourcePath = "C:\Program Files\AMD\AI_Bundle\Amuse\Plugins\RyzenAI\xclbin\stx"
+    $destinationPath = "$PWD\lib"
+
+    if (Test-Path $sourcePath) {
+        Write-Host "Found STX binaries at: $sourcePath" -ForegroundColor Cyan
+        
+        if (-not (Test-Path $destinationPath)) {
+            New-Item -ItemType Directory -Force -Path $destinationPath | Out-Null
+        }
+
+        # 2. Copy the binaries to your sandbox lib folder
+        Copy-Item -Path "$sourcePath\*" -Destination $destinationPath -Recurse -Force
+        Write-Host "Successfully hooked up NPU binaries to: $destinationPath" -ForegroundColor Green
+    }
+    else {
+        Write-Error "Could not find the STX folder. Please check if Amuse is fully installed."
+    }
+}
+
