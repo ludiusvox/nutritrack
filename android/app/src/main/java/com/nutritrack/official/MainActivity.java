@@ -1,4 +1,4 @@
-package com.nutritrack.app;
+package com.nutritrack.official;
 
 import com.getcapacitor.BridgeActivity;
 
