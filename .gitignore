@@ -1,4 +1,10 @@
-node_modules
-
-
-.aider*
+node_modules/
+build/
+dist/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example
+deployment_cert.der
+nutritrack-release.jks
