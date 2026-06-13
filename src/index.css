@@ -1,0 +1,219 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-display: "Outfit", "Inter", sans-serif;
+}
+
+body {
+  background-color: #0f1015;
+  color: #f3f4f6;
+  font-family: var(--font-sans);
+}
+
+/* Custom glowing effects for our exercise/nutrition summary boxes */
+.glow-blue {
+  box-shadow: 0 0 15px rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+}
+
+.glow-orange {
+  box-shadow: 0 0 15px rgba(249, 115, 22, 0.15);
+  border: 1px solid rgba(249, 115, 22, 0.35);
+}
+
+.glow-purple {
+  box-shadow: 0 0 15px rgba(168, 85, 247, 0.15);
+  border: 1px solid rgba(168, 85, 247, 0.35);
+}
+
+/* Glassmorphism custom effects */
+.glass-panel {
+  background: rgba(22, 22, 28, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Smooth active state transitions */
+.tab-transition {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Nice iOS aspect scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(10, 10, 15, 0.2);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ==========================================================================
+   Functional Light Mode Overrides
+   ========================================================================== */
+.light-mode {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+/* Desktop descriptive panel overrides */
+.light-mode .lg\:flex {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+.light-mode .lg\:flex h1 {
+  color: #0f172a !important;
+}
+
+.light-mode .lg\:flex p {
+  color: #475569 !important;
+}
+
+/* Phone Viewport Frame */
+.light-mode .border-\[10px\] {
+  border-color: #1e293b !important;
+}
+
+/* General Layout sections on light mode */
+.light-mode #dashboard-view,
+.light-mode #camera-page,
+.light-mode #diary-view,
+.light-mode #fueling-plan-view,
+.light-mode #sync-settings-page,
+.light-mode #mifflin-calcs-page,
+.light-mode #bodyfat-calcs-page,
+.light-mode #calcs-sub-segment,
+.light-mode .bg-\[\#0a0a0c\] {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+.light-mode .bg-\[\#121216\] {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+}
+
+.light-mode .bg-\[\#16161a\] {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+.light-mode .bg-\[\#1c1c24\] {
+  background-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* Escaped equivalents for Tailwind */
+.light-mode .bg-\[\#0a0a0c\/80\] {
+  background-color: rgba(248, 250, 252, 0.8) !important;
+}
+
+.light-mode .bg-\[\#121216\/80\] {
+  background-color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.light-mode .bg-\[\#1c1c24\/50\] {
+  background-color: rgba(226, 232, 240, 0.5) !important;
+}
+
+/* Borders mapping */
+.light-mode .border-\[\#222228\] {
+  border-color: #cbd5e1 !important;
+}
+
+.light-mode .border-\[\#3e3e4a\] {
+  border-color: #cbd5e1 !important;
+}
+
+/* Text nodes styles overrides */
+.light-mode .text-white,
+.light-mode h1,
+.light-mode h2,
+.light-mode h3,
+.light-mode h4,
+.light-mode span.text-white {
+  color: #0f172a !important;
+}
+
+.light-mode .text-gray-200,
+.light-mode .text-gray-300,
+.light-mode .text-gray-400 {
+  color: #475569 !important;
+}
+
+.light-mode .text-gray-500 {
+  color: #64748b !important;
+}
+
+/* User Form fields overrides */
+.light-mode input[type="text"],
+.light-mode input[type="number"],
+.light-mode select {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+
+.light-mode input[type="text"]::placeholder,
+.light-mode input[type="number"]::placeholder {
+  color: #94a3b8 !important;
+}
+
+.light-mode label {
+  color: #475569 !important;
+}
+
+/* Concentric ring diagram elements */
+.light-mode #concentric-ring-diagram .absolute span {
+  color: #475569 !important;
+}
+
+.light-mode #concentric-ring-diagram .absolute span.text-white {
+  color: #0f172a !important;
+}
+
+/* Bottom summary active drawer sheets */
+.light-mode #weekly-summary-sheet {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+}
+
+.light-mode #weekly-summary-sheet .bg-\[\#101014\] {
+  background-color: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+}
+
+.light-mode #weekly-summary-sheet h4,
+.light-mode #weekly-summary-sheet span {
+  color: #0f172a !important;
+}
+
+/* Custom inputs inside camera form */
+.light-mode #custom-meal-form {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+}
+
+.light-mode #custom-meal-form input {
+  background-color: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+}
+
+.light-mode #custom-meal-form .bg-\[\#1c1c24\/50\] {
+  background-color: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+}

@@ -1,5 +1,5 @@
 {
-  "appId": "com.nutritrack.app",
+  "appId": "com.nutritrack.official",
   "appName": "NutriTrack",
   "webDir": "dist",
   "bundledWebRuntime": false,
