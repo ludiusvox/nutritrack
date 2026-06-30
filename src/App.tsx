@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Home, Camera, Clipboard, Calendar, Sliders, Info, Sparkles } from 'lucide-react';
+import { App as CapApp } from '@capacitor/app';
 import { LogEntry, Activity, SyncSettings, MifflinInputs, BodyFatInputs } from './types';
 import {
   INITIAL_LOGS,
@@ -144,7 +145,18 @@ export default function App() {
 
   // Safe synchronization into client localStorage
   useEffect(() => {
-    localStorage.setItem('nutritrack_logs', JSON.stringify(logs));
+    try {
+      localStorage.setItem('nutritrack_logs', JSON.stringify(logs));
+    } catch (e) {
+      if (e instanceof DOMException && (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED')) {
+        console.error('Storage quota exceeded!');
+        // Keep the latest 5 entries only if quota exceeded
+        if (logs.length > 5) {
+          alert("Storage full! Keeping only recent logs.");
+          setLogs(logs.slice(0, 5));
+        }
+      }
+    }
   }, [logs]);
 
   useEffect(() => {
@@ -168,6 +180,26 @@ export default function App() {
     const saved = localStorage.getItem('nutritrack_dark_mode');
     return saved !== null ? saved === 'true' : true;
   });
+
+  // Handle Hardware Back Button for Android
+  useEffect(() => {
+    const backHandler = CapApp.addListener('backButton', ({ canGoBack }) => {
+      if (showSyncSettings) {
+        setShowSyncSettings(false);
+      } else if (showSidebar) {
+        setShowSidebar(false);
+      } else if (activeTab !== 'dashboard') {
+        setActiveTab('dashboard');
+      } else {
+        // At root level, exit app
+        CapApp.exitApp();
+      }
+    });
+
+    return () => {
+      backHandler.then(h => h.remove());
+    };
+  }, [activeTab, showSyncSettings, showSidebar]);
 
   useEffect(() => {
     localStorage.setItem('nutritrack_dark_mode', String(darkMode));
@@ -402,7 +434,7 @@ export default function App() {
             </div>
 
             {/* iOS bottom safe area indicator bar & Unified Navigation Bottom Bar (Matches screens perfectly!) */}
-            <div className="bg-[#121216] border-t border-[#222228] px-2 py-2 flex items-center justify-around z-40 relative">
+            <div className="bg-[#121216] border-t border-[#222228] px-4 py-3 pb-6 flex items-center justify-around z-40 relative safe-area-bottom">
               {/* Tab 1: Dashboard */}
               <button
                 onClick={() => { setActiveTab('dashboard'); setShowSyncSettings(false); }}

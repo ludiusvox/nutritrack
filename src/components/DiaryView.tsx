@@ -94,9 +94,32 @@ export default function DiaryView({ logs, onDeleteLog, targetCalories = 2500, on
     setTimeout(() => setExported(false), 2000);
   };
 
-  const handleDownloadReport = () => {
+  const handleDownloadReport = async () => {
     const markdown = generateMarkdownReport();
-    downloadFile(markdown, `NutriTrack_Report_${new Date().toISOString().split('T')[0]}.md`, 'text/markdown');
+    const fileName = `NutriTrack_Report_${new Date().toISOString().split('T')[0]}.md`;
+
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const result = await Filesystem.writeFile({
+          path: fileName,
+          data: markdown,
+          directory: Directory.Cache,
+          encoding: 'utf8' as any
+        });
+
+        await Share.share({
+          title: 'Export NutriTrack Report',
+          text: 'My NutriTrack nutrition report.',
+          url: result.uri,
+          dialogTitle: 'Export Report'
+        });
+      } catch (e) {
+        console.error('Error saving report', e);
+        downloadFile(markdown, fileName, 'text/markdown');
+      }
+    } else {
+      downloadFile(markdown, fileName, 'text/markdown');
+    }
   };
 
   const handleDownloadCSV = async () => {
@@ -108,7 +131,7 @@ export default function DiaryView({ logs, onDeleteLog, targetCalories = 2500, on
         const result = await Filesystem.writeFile({
           path: fileName,
           data: csv,
-          directory: Directory.Documents,
+          directory: Directory.Cache,
           encoding: 'utf8' as any
         });
 
@@ -149,7 +172,7 @@ export default function DiaryView({ logs, onDeleteLog, targetCalories = 2500, on
         >
           <Menu className="w-6 h-6" />
         </button>
-        <span className="font-extrabold text-[#f97316] tracking-wide text-lg">NutriTrack Summary</span>
+        <span className="font-extrabold text-[#f97316] tracking-wide text-lg px-3 flex-1 text-center">NutriTrack Summary</span>
         <button
           onClick={() => setExportModal(true)}
           id="btn-trigger-export"
@@ -287,10 +310,10 @@ export default function DiaryView({ logs, onDeleteLog, targetCalories = 2500, on
                   </div>
 
                   {/* Optional Food Image */}
-                  {log.imageBase64 && (
+                  {log.imagePath && (
                     <div className="w-full h-32 rounded-lg overflow-hidden border border-[#222228] bg-black/40 mb-1">
                       <img
-                        src={log.imageBase64}
+                        src={Capacitor.convertFileSrc(log.imagePath)}
                         alt={log.name}
                         className="w-full h-full object-cover"
                       />

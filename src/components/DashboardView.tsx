@@ -72,7 +72,7 @@ export default function DashboardView({
           <Menu className="w-6 h-6" />
         </button>
 
-        <h1 className="text-lg font-bold font-display tracking-wide text-white">
+        <h1 className="text-lg font-bold font-display tracking-wide text-white px-3 flex-1 text-center">
           NutriTrack Dashboard
         </h1>
 
@@ -89,10 +89,10 @@ export default function DashboardView({
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-5 pb-24">
+      <div className="flex-1 overflow-y-auto px-6 py-4 space-y-5 pb-24 safe-area-x">
         
         {/* Pills Selector */}
-        <div className="flex bg-[#121216]/80 p-1.5 rounded-xl border border-[#222228] space-x-1" id="sub-tabs-selection">
+        <div className="flex bg-[#121216]/80 p-1.5 rounded-xl border border-[#222228] space-x-1 max-w-sm mx-auto w-full" id="sub-tabs-selection">
           <button
             onClick={() => onNavigateToTab('camera')}
             className="flex-1 py-2 rounded-lg text-xs font-semibold text-gray-300 hover:text-white hover:bg-[#1c1c24]/50 transition-all flex items-center justify-center space-x-1 border border-transparent"
@@ -277,9 +277,9 @@ export default function DashboardView({
                     id={`log-item-${log.id}`}
                     className="flex justify-between items-center p-3 bg-[#121216] border border-[#222228] rounded-xl hover:bg-[#16161a] transition-colors gap-3"
                   >
-                    {log.imageBase64 && (
+                    {log.imagePath && (
                       <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 border border-[#222228]">
-                        <img src={log.imageBase64} alt="" className="w-full h-full object-cover" />
+                        <img src={Capacitor.convertFileSrc(log.imagePath)} alt="" className="w-full h-full object-cover" />
                       </div>
                     )}
                     <div className="flex-1 min-w-0">

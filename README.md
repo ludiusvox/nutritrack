@@ -1,12 +1,20 @@
+<<<<<<< Updated upstream
 # 📸 NutriTrack - Tactical Nutrition & Athletic Performance Dashboard
 
 > A comprehensive diagnostic suite for tactical athletes, combining high-precision macro/stimulant tracking with doctrinal performance fueling strategies. Powered by computer vision analysis and baseline metabolic modeling.
+=======
+<div align="center">
+<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
+</div>
 
-[![Android](https://img.shields.io/badge/Android-APK-green)](https://capacitorjs.com/)
-[![License](https://img.shields.io/badge/License-MIT-blue)]()
+# Run and deploy your AI Studio app
+>>>>>>> Stashed changes
 
----
+This contains everything you need to run your app locally.
 
+View your app in AI Studio: https://ai.studio/apps/1ece2d33-d80b-4de8-8a3d-b7996914ac2b
+
+<<<<<<< Updated upstream
 ## ✨ Full Feature Architecture
 
 ### 🛡️ Diagnostic Core
@@ -91,3 +99,15 @@ npx cap sync  # Sync Native Assets
 <p align="center">
   <i>"Accomplish the mission and come home healthy." — FM 7-22</i>
 </p>
+=======
+## Run Locally
+
+**Prerequisites:**  Node.js
+
+
+1. Install dependencies:
+   `npm install`
+2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+3. Run the app:
+   `npm run dev`
+>>>>>>> Stashed changes

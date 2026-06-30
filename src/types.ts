@@ -14,7 +14,7 @@ export interface LogEntry {
   caffeineMg?: number;
   nicotineMg?: number;
   timestamp: string;
-  imageBase64?: string;
+  imagePath?: string;
 }
 
 export interface Activity {
@@ -46,6 +46,8 @@ export interface MifflinInputs {
   weightUnit: 'lbs' | 'kg';
   weightValue: number;
   activityLevel: 'Sedentary' | 'Lightly Active' | 'Moderately Active' | 'Very Active' | 'Extra Active';
+  leanBodyMass?: number;
+  lbmUnit?: 'lbs' | 'kg';
 }
 
 export interface BodyFatInputs {

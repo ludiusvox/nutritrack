@@ -4,8 +4,10 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Camera, Image as ImageIcon, Loader, CheckCircle2, AlertTriangle, Sparkles, Plus, Dumbbell, Coffee, Scale } from 'lucide-react';
+import { Camera, Image as ImageIcon, Loader, CheckCircle2, AlertTriangle, Sparkles, Plus, Dumbbell, Coffee, Scale, Menu } from 'lucide-react';
 import { AnalysisResponse, LogEntry } from '../types';
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { Capacitor } from '@capacitor/core';
 
 interface CameraViewProps {
   onAddLog: (entry: Omit<LogEntry, 'id' | 'timestamp'>) => void;
@@ -17,6 +19,7 @@ export default function CameraView({ onAddLog, onBack, onOpenSidebar }: CameraVi
   // Navigation & States
   const [analyzing, setAnalyzing] = useState(false);
   const [customImageBase64, setCustomImageBase64] = useState<string | null>(null);
+  const [imagePath, setImagePath] = useState<string | null>(null);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [analyzedResult, setAnalyzedResult] = useState<AnalysisResponse | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -174,8 +177,9 @@ export default function CameraView({ onAddLog, onBack, onOpenSidebar }: CameraVi
 
       setAnalyzedResult(data);
       
-      // Auto-populate manual forms
-      setMealName(data.foodName || 'Scanned Meal');
+      // We no longer set the Meal Name automatically as per user request
+      // setMealName(data.foodName || 'Scanned Meal');
+
       setCarbs(data.carbs || 0);
       setProtein(data.protein || 0);
       setFat(data.fat || 0);
@@ -198,7 +202,7 @@ export default function CameraView({ onAddLog, onBack, onOpenSidebar }: CameraVi
       const { Camera: CapCamera, CameraResultType, CameraSource } = await import('@capacitor/camera');
       
       const image = await CapCamera.getPhoto({
-        quality: 90,
+        quality: 70, // Slightly reduced quality to save space
         allowEditing: false,
         resultType: CameraResultType.Base64,
         source: source === 'camera' ? CameraSource.Camera : CameraSource.Photos
@@ -208,6 +212,17 @@ export default function CameraView({ onAddLog, onBack, onOpenSidebar }: CameraVi
         const mimeType = `image/${image.format}`;
         const base64Data = `data:${mimeType};base64,${image.base64String}`;
         setCustomImageBase64(base64Data);
+
+        // Save to Filesystem to avoid LocalStorage Quota limits
+        if (Capacitor.isNativePlatform()) {
+          const fileName = `food_${Date.now()}.${image.format}`;
+          const savedFile = await Filesystem.writeFile({
+            path: fileName,
+            data: image.base64String,
+            directory: Directory.Data
+          });
+          setImagePath(savedFile.uri);
+        }
 
         setAnalyzing(true);
         setAnalyzedResult(null);
@@ -255,11 +270,12 @@ export default function CameraView({ onAddLog, onBack, onOpenSidebar }: CameraVi
       mealType,
       caffeineMg: finalCaffeine,
       nicotineMg: finalNicotine,
-      imageBase64: customImageBase64 || undefined
+      imagePath: imagePath || undefined
     });
 
     alert(`Logged "${finalMealName}" into your Nutrition Records!`);
     resetForm();
+    setImagePath(null);
   };
 
   return (
@@ -275,11 +291,20 @@ export default function CameraView({ onAddLog, onBack, onOpenSidebar }: CameraVi
       />
 
       {/* Header */}
-      <div className="flex flex-col items-center py-3 border-b border-[#222228] bg-[#121216] relative text-center">
-        <h2 className="text-xl font-bold tracking-tight font-display text-white">NutriTrack Vision</h2>
-        <span className="text-[10px] text-[#f97316] uppercase tracking-widest font-extrabold mt-0.5">
-          Capacitor Camera & Android Diagnostics
-        </span>
+      <div className="flex items-center py-3 border-b border-[#222228] bg-[#121216] relative px-4">
+        <button
+          onClick={onOpenSidebar}
+          className="p-1 rounded-lg hover:bg-[#1c1c24] transition-colors bg-transparent border-none text-white cursor-pointer"
+        >
+          <Menu className="w-6 h-6" />
+        </button>
+        <div className="flex-1 text-center px-3">
+          <h2 className="text-xl font-bold tracking-tight font-display text-white">NutriTrack Vision</h2>
+          <span className="text-[10px] text-[#f97316] uppercase tracking-widest font-extrabold mt-0.5">
+            Capacitor Camera & Android Diagnostics
+          </span>
+        </div>
+        <div className="w-8" /> {/* Spacer */}
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-6 pb-24">

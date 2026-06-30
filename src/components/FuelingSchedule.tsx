@@ -152,7 +152,7 @@ export default function FuelingSchedule({
         >
           <Menu className="w-6 h-6" />
         </button>
-        <h3 className="font-semibold text-gray-400 text-sm">NutriTrack Planner</h3>
+        <h3 className="font-semibold text-gray-400 text-sm px-3 flex-1 text-center">NutriTrack Planner</h3>
         <div className="w-8" /> {/* Spacer */}
       </div>
 

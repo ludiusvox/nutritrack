@@ -18,6 +18,9 @@ export default function MifflinCalculator({ initialInputs, onClose, onSaveResult
   const [bmr, setBmr] = useState(1785);
   const [tdee, setTdee] = useState(2678);
 
+  // Derived Macro Targets
+  const [macros, setMacros] = useState({ carbs: 0, protein: 0, fat: 0 });
+
   const activityRanges = [
     { label: 'Sedentary (little or no exercise)', multiplier: 1.2 },
     { label: 'Lightly Active (exercise 1-3 days/week)', multiplier: 1.375 },
@@ -54,24 +57,33 @@ export default function MifflinCalculator({ initialInputs, onClose, onSaveResult
 
   // Run calculation whenever inputs alter
   useEffect(() => {
-    let weightInKg = inputs.weightValue;
+    // Graceful handling of empty/invalid inputs
+    const age = Number(inputs.age) || 0;
+    const weightValue = Number(inputs.weightValue) || 0;
+    const heightCm = Number(inputs.heightCm) || 0;
+    const heightFt = Number(inputs.heightFt) || 0;
+    const heightIn = Number(inputs.heightIn) || 0;
+
+    if (age === 0 || weightValue === 0) return;
+
+    let weightInKg = weightValue;
     if (inputs.weightUnit === 'lbs') {
-      weightInKg = inputs.weightValue * 0.453592;
+      weightInKg = weightValue * 0.453592;
     }
 
-    let heightInCm = inputs.heightCm;
+    let calculatedHeightInCm = heightCm;
     if (inputs.heightUnit === 'ft-in') {
-      heightInCm = (inputs.heightFt * 30.48) + (inputs.heightIn * 2.54);
+      calculatedHeightInCm = (heightFt * 30.48) + (heightIn * 2.54);
     }
+
+    if (calculatedHeightInCm === 0) return;
 
     // Mifflin-St Jeor Equation
-    // Men: BMR = (10 * weight in kg) + (6.25 * height in cm) - (5 * age in years) + 5
-    // Women: BMR = (10 * weight in kg) + (6.25 * height in cm) - (5 * age in years) - 161
     let computedBmr = 0;
     if (inputs.gender === 'male') {
-      computedBmr = (10 * weightInKg) + (6.25 * heightInCm) - (5 * inputs.age) + 5;
+      computedBmr = (10 * weightInKg) + (6.25 * calculatedHeightInCm) - (5 * age) + 5;
     } else {
-      computedBmr = (10 * weightInKg) + (6.25 * heightInCm) - (5 * inputs.age) - 161;
+      computedBmr = (10 * weightInKg) + (6.25 * calculatedHeightInCm) - (5 * age) - 161;
     }
 
     computedBmr = Math.round(computedBmr);
@@ -83,6 +95,26 @@ export default function MifflinCalculator({ initialInputs, onClose, onSaveResult
     setBmr(computedBmr);
     setTdee(computedTdee);
 
+    // Calculate Macros based on TDEE (Standard Athletic Split)
+    // 48% Carbs, 24% Protein, 28% Fat (matches DiaryView targets)
+    const standardProtein = Math.round((computedTdee * 0.24) / 4);
+
+    let proteinGrams = standardProtein;
+    if (inputs.leanBodyMass && inputs.leanBodyMass > 0) {
+      // If LBM is provided, calculate protein as 1g per lb of lean mass
+      if (inputs.lbmUnit === 'kg') {
+        proteinGrams = Math.round(inputs.leanBodyMass * 2.2);
+      } else {
+        proteinGrams = Math.round(inputs.leanBodyMass);
+      }
+    }
+
+    setMacros({
+      carbs: Math.round((computedTdee * 0.48) / 4),
+      protein: proteinGrams,
+      fat: Math.round((computedTdee * 0.28) / 9)
+    });
+
     if (onSaveResults) {
       onSaveResults(computedBmr, computedTdee);
     }
@@ -92,7 +124,7 @@ export default function MifflinCalculator({ initialInputs, onClose, onSaveResult
     <div className="flex flex-col h-full bg-[#0a0a0c] text-[#f3f4f6]" id="mifflin-view">
       {/* Top bar with close X */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-[#222228] bg-[#121216]">
-        <span className="font-semibold text-gray-400 text-xs tracking-wider">CALCULATE METABOLICS</span>
+        <span className="font-semibold text-gray-400 text-xs tracking-wider px-3 flex-1 text-center uppercase">Calculate Metabolics</span>
         {onClose && (
           <button
             onClick={onClose}
@@ -128,11 +160,12 @@ export default function MifflinCalculator({ initialInputs, onClose, onSaveResult
               <input
                 type="number"
                 value={inputs.age || ''}
-                onChange={(e) => setInputs({ ...inputs, age: Math.max(1, parseInt(e.target.value) || 0) })}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setInputs({ ...inputs, age: val === '' ? 0 : parseInt(val) });
+                }}
                 className="w-24 bg-[#1c1c24] border border-[#3e3e4a] rounded-lg p-1.5 px-3 text-right text-white text-sm focus:outline-none focus:border-[#f97316]"
-                min="1"
-                max="120"
-                required
+                placeholder="0"
               />
             </div>
 
@@ -203,22 +236,24 @@ export default function MifflinCalculator({ initialInputs, onClose, onSaveResult
                     <input
                       type="number"
                       value={inputs.heightFt || ''}
-                      onChange={(e) => setInputs({ ...inputs, heightFt: Math.max(1, parseInt(e.target.value) || 0) })}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setInputs({ ...inputs, heightFt: val === '' ? 0 : parseInt(val) });
+                      }}
                       placeholder="ft"
                       className="w-16 bg-[#1c1c24] border border-[#3e3e4a] rounded-lg p-1.5 text-center text-white text-sm focus:outline-none focus:border-[#f97316]"
-                      min="1"
-                      max="8"
                     />
                     <span className="text-xs text-[#9ca3af]">ft</span>
 
                     <input
                       type="number"
-                      value={inputs.heightIn || 0}
-                      onChange={(e) => setInputs({ ...inputs, heightIn: Math.max(0, parseInt(e.target.value) || 0) })}
+                      value={inputs.heightIn || ''}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setInputs({ ...inputs, heightIn: val === '' ? 0 : parseInt(val) });
+                      }}
                       placeholder="in"
                       className="w-16 bg-[#1c1c24] border border-[#3e3e4a] rounded-lg p-1.5 text-center text-white text-sm focus:outline-none focus:border-[#f97316]"
-                      min="0"
-                      max="11"
                     />
                     <span className="text-xs text-[#9ca3af]">in</span>
                   </div>
@@ -227,11 +262,12 @@ export default function MifflinCalculator({ initialInputs, onClose, onSaveResult
                     <input
                       type="number"
                       value={inputs.heightCm || ''}
-                      onChange={(e) => setInputs({ ...inputs, heightCm: Math.max(30, parseInt(e.target.value) || 0) })}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setInputs({ ...inputs, heightCm: val === '' ? 0 : parseInt(val) });
+                      }}
                       placeholder="cm"
                       className="w-24 bg-[#1c1c24] border border-[#3e3e4a] rounded-lg p-1.5 text-center text-white text-sm focus:outline-none focus:border-[#f97316]"
-                      min="30"
-                      max="250"
                     />
                     <span className="text-xs text-[#9ca3af]">cm</span>
                   </div>
@@ -273,12 +309,62 @@ export default function MifflinCalculator({ initialInputs, onClose, onSaveResult
                 <input
                   type="number"
                   value={inputs.weightValue || ''}
-                  onChange={(e) => setInputs({ ...inputs, weightValue: Math.max(1, parseFloat(e.target.value) || 0) })}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setInputs({ ...inputs, weightValue: val === '' ? 0 : parseFloat(val) });
+                  }}
+                  placeholder="0"
                   className="w-24 bg-[#1c1c24] border border-[#3e3e4a] rounded-lg p-1.5 text-center text-white text-sm focus:outline-none focus:border-[#f97316]"
-                  min="1"
-                  required
                 />
                 <span className="text-xs text-[#9ca3af]">{inputs.weightUnit}</span>
+              </div>
+            </div>
+
+            {/* Lean Body Mass Input (Optional) */}
+            <div className="flex flex-col space-y-2" id="row-input-lbm">
+              <div className="flex items-center justify-between">
+                <div className="flex flex-col">
+                  <label className="text-sm font-semibold text-white">Lean Body Mass</label>
+                  <span className="text-[10px] text-gray-500 uppercase font-bold tracking-tight">Optional: For accurate protein</span>
+                </div>
+                <div className="flex bg-[#1c1c24] p-1 rounded-lg border border-[#222228]">
+                  <button
+                    type="button"
+                    onClick={() => setInputs({ ...inputs, lbmUnit: 'lbs' })}
+                    className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
+                      inputs.lbmUnit === 'lbs'
+                        ? 'bg-[#10b981]/30 text-white border border-[#10b981]/50'
+                        : 'text-gray-400'
+                    }`}
+                  >
+                    lbs
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setInputs({ ...inputs, lbmUnit: 'kg' })}
+                    className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
+                      inputs.lbmUnit === 'kg'
+                        ? 'bg-[#10b981]/30 text-white border border-[#10b981]/50'
+                        : 'text-gray-400'
+                    }`}
+                  >
+                    kg
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex justify-end items-center space-x-2">
+                <input
+                  type="number"
+                  value={inputs.leanBodyMass || ''}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setInputs({ ...inputs, leanBodyMass: val === '' ? 0 : parseFloat(val) });
+                  }}
+                  placeholder="0"
+                  className="w-24 bg-[#1c1c24] border border-[#3e3e4a] rounded-lg p-1.5 text-center text-white text-sm focus:outline-none focus:border-emerald-500"
+                />
+                <span className="text-xs text-[#9ca3af]">{inputs.lbmUnit}</span>
               </div>
             </div>
 
@@ -328,6 +414,27 @@ export default function MifflinCalculator({ initialInputs, onClose, onSaveResult
               <span className="text-[10px] text-gray-500 font-mono tracking-widest uppercase block mt-0.5">
                 TDEE daily energy expenditure estimate
               </span>
+            </div>
+
+            {/* Macro Recommendations */}
+            <div className="grid grid-cols-3 gap-3 pt-4 border-t border-[#222228]">
+              <div className="space-y-1">
+                <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wider block">Carbs</span>
+                <span className="text-xl font-bold text-white font-mono">{macros.carbs}g</span>
+                <span className="text-[9px] text-gray-500 block uppercase">48% split</span>
+              </div>
+              <div className="space-y-1">
+                <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider block">Protein</span>
+                <span className="text-xl font-bold text-white font-mono">{macros.protein}g</span>
+                <span className="text-[9px] text-gray-500 block uppercase">
+                  {inputs.leanBodyMass && inputs.leanBodyMass > 0 ? 'LBM Derived' : '24% split'}
+                </span>
+              </div>
+              <div className="space-y-1">
+                <span className="text-[10px] font-bold text-amber-500 uppercase tracking-wider block">Fat</span>
+                <span className="text-xl font-bold text-white font-mono">{macros.fat}g</span>
+                <span className="text-[9px] text-gray-500 block uppercase">28% split</span>
+              </div>
             </div>
 
             <p className="text-xs text-[#9ca3af] pt-2 border-t border-[#222228] italic">

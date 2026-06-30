@@ -111,7 +111,9 @@ export const INITIAL_MIFFLIN_INPUTS: MifflinInputs = {
   heightIn: 10,
   weightUnit: 'lbs',
   weightValue: 165,
-  activityLevel: 'Moderately Active'
+  activityLevel: 'Moderately Active',
+  leanBodyMass: 0,
+  lbmUnit: 'lbs'
 };
 
 export const INITIAL_BODY_FAT_INPUTS: BodyFatInputs = {

@@ -95,8 +95,8 @@ export default function BodyFatCalculator({ initialInputs, onBack, onSaveResult 
           <ArrowLeft className="w-5 h-5 mr-1" />
           <span className="font-semibold text-lg">Back</span>
         </button>
-        <span className="font-bold text-sm tracking-wide text-white">Body Fat Calculator</span>
-        <div className="w-5" />
+        <span className="font-bold text-sm tracking-wide text-white px-3 flex-1 text-center">Body Fat Calculator</span>
+        <div className="w-10" />
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6 pb-12">
