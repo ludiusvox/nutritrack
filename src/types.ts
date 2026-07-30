@@ -20,12 +20,25 @@ export interface LogEntry {
 export interface Activity {
   id: string;
   time: string;
+  date: string; // ISO format date string
   name: string;
   durationMin: number;
   distance?: string;
   type: 'weightlifting' | 'biking' | 'running' | 'other';
   presetPreLoad: string;
   presetPostLoad: string;
+}
+
+export interface FastingConfig {
+  mode: 'none' | '5/2' | '16/8';
+  startHour: number; // For 16/8 (e.g., 12 for 12 PM)
+  endHour: number;   // For 16/8 (e.g., 20 for 8 PM)
+  dailyCalorieGoal: number;
+}
+
+export interface WeeklyCalorieStats {
+  weekStarting: string; // ISO date string for Monday or Sunday of that week
+  dailyCalories: number[]; // 7 values for the week
 }
 
 export interface SyncSettings {

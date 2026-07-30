@@ -12,7 +12,9 @@ import {
   INITIAL_ACTIVITIES,
   INITIAL_SYNC_SETTINGS,
   INITIAL_MIFFLIN_INPUTS,
-  INITIAL_BODY_FAT_INPUTS
+  INITIAL_BODY_FAT_INPUTS,
+  INITIAL_FASTING_CONFIG,
+  INITIAL_WEEKLY_STATS
 } from './data';
 
 import DashboardView from './components/DashboardView';
@@ -68,6 +70,49 @@ export default function App() {
       return [];
     }
   });
+
+  const [fastingConfig, setFastingConfig] = useState(() => {
+    try {
+      const saved = localStorage.getItem('nutritrack_fasting');
+      if (!saved) return INITIAL_FASTING_CONFIG;
+      return JSON.parse(saved);
+    } catch (e) {
+      return INITIAL_FASTING_CONFIG;
+    }
+  });
+
+  const [weeklyStats, setWeeklyStats] = useState(() => {
+    try {
+      const saved = localStorage.getItem('nutritrack_weekly_stats');
+      if (!saved) return INITIAL_WEEKLY_STATS;
+      return JSON.parse(saved);
+    } catch (e) {
+      return INITIAL_WEEKLY_STATS;
+    }
+  });
+
+  // Maintenance: Keep only last 4 weeks of records
+  useEffect(() => {
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setDate(oneMonthAgo.getDate() - 30);
+
+    setWeeklyStats(prev => {
+      const filtered = prev.filter(stat => new Date(stat.weekStarting) >= oneMonthAgo);
+
+      // Also ensure current week exists
+      const now = new Date();
+      const day = now.getDay();
+      const diff = now.getDate() - day + (day === 0 ? -6 : 1); // Adjust to Monday
+      const monday = new Date(now.setDate(diff));
+      const mondayISO = monday.toISOString().split('T')[0];
+
+      const currentWeekExists = filtered.some(s => s.weekStarting === mondayISO);
+      if (!currentWeekExists) {
+        return [...filtered, { weekStarting: mondayISO, dailyCalories: [0,0,0,0,0,0,0] }];
+      }
+      return filtered;
+    });
+  }, []);
 
   // Reset logic
   useEffect(() => {
@@ -174,6 +219,37 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('nutritrack_bodyfat', JSON.stringify(bodyFatInputs));
   }, [bodyFatInputs]);
+
+  useEffect(() => {
+    localStorage.setItem('nutritrack_fasting', JSON.stringify(fastingConfig));
+  }, [fastingConfig]);
+
+  useEffect(() => {
+    localStorage.setItem('nutritrack_weekly_stats', JSON.stringify(weeklyStats));
+  }, [weeklyStats]);
+
+  // Update current day's stats when logs change
+  useEffect(() => {
+    const totalToday = logs.reduce((acc, log) => acc + log.calories, 0);
+    const now = new Date();
+    const dayIndex = (now.getDay() + 6) % 7; // 0=Mon, 6=Sun
+
+    const day = now.getDay();
+    const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+    const monday = new Date(now.setDate(diff));
+    const mondayISO = monday.toISOString().split('T')[0];
+
+    setWeeklyStats(prev => {
+      return prev.map(stat => {
+        if (stat.weekStarting === mondayISO) {
+          const newDaily = [...stat.dailyCalories];
+          newDaily[dayIndex] = totalToday;
+          return { ...stat, dailyCalories: newDaily };
+        }
+        return stat;
+      });
+    });
+  }, [logs]);
 
   // App-wide dark mode state & persistence
   const [darkMode, setDarkMode] = useState<boolean>(() => {
@@ -342,6 +418,7 @@ export default function App() {
                       setDarkMode={setDarkMode}
                       onOpenSidebar={() => setShowSidebar(true)}
                       onOpenSyncSettings={() => setShowSyncSettings(true)}
+                      targetCalories={fastingConfig.dailyCalorieGoal}
                       onNavigateToTab={(tab) => {
                         if (tab === 'mifflin') {
                           setActiveTab('calcs');
@@ -369,7 +446,7 @@ export default function App() {
                     <DiaryView
                       logs={logs}
                       onDeleteLog={handleDeleteLog}
-                      targetCalories={2500}
+                      targetCalories={fastingConfig.dailyCalorieGoal}
                       onOpenSidebar={() => setShowSidebar(true)}
                     />
                   )}
@@ -382,6 +459,10 @@ export default function App() {
                       onAddActivity={handleAddActivity}
                       onDeleteActivity={handleDeleteActivity}
                       onOpenSidebar={() => setShowSidebar(true)}
+                      fastingConfig={fastingConfig}
+                      setFastingConfig={setFastingConfig}
+                      weeklyStats={weeklyStats}
+                      setWeeklyStats={setWeeklyStats}
                     />
                   )}
 
