@@ -81,7 +81,7 @@ export default function App() {
     }
   });
 
-  const [weeklyStats, setWeeklyStats] = useState(() => {
+  const [weeklyStats, setWeeklyStats] = useState<WeeklyCalorieStats[]>(() => {
     try {
       const saved = localStorage.getItem('nutritrack_weekly_stats');
       if (!saved) return INITIAL_WEEKLY_STATS;
@@ -91,28 +91,55 @@ export default function App() {
     }
   });
 
-  // Maintenance: Keep only last 4 weeks of records
+  // Helper to get local Monday ISO string
+  const getMondayISO = (date: Date) => {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    d.setDate(diff);
+    // Return local date part
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const dayStr = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${dayStr}`;
+  };
+
+  // Maintenance: Keep only last 4 weeks of records and update current day
   useEffect(() => {
+    const now = new Date();
     const oneMonthAgo = new Date();
     oneMonthAgo.setDate(oneMonthAgo.getDate() - 30);
+    const mondayISO = getMondayISO(now);
+    const dayIndex = (now.getDay() + 6) % 7;
+    const totalToday = logs.reduce((acc, log) => acc + log.calories, 0);
 
     setWeeklyStats(prev => {
-      const filtered = prev.filter(stat => new Date(stat.weekStarting) >= oneMonthAgo);
+      // 1. Filter old records
+      let updated = prev.filter(stat => {
+          // Parse as local date to compare correctly
+          const [y, m, d] = stat.weekStarting.split('-').map(Number);
+          const weekDate = new Date(y, m - 1, d);
+          return weekDate >= oneMonthAgo;
+      });
 
-      // Also ensure current week exists
-      const now = new Date();
-      const day = now.getDay();
-      const diff = now.getDate() - day + (day === 0 ? -6 : 1); // Adjust to Monday
-      const monday = new Date(now.setDate(diff));
-      const mondayISO = monday.toISOString().split('T')[0];
+      // 2. Ensure current week exists
+      const existingWeekIdx = updated.findIndex(s => s.weekStarting === mondayISO);
 
-      const currentWeekExists = filtered.some(s => s.weekStarting === mondayISO);
-      if (!currentWeekExists) {
-        return [...filtered, { weekStarting: mondayISO, dailyCalories: [0,0,0,0,0,0,0] }];
+      if (existingWeekIdx !== -1) {
+        // Update today's value in current week
+        const newDaily = [...updated[existingWeekIdx].dailyCalories];
+        newDaily[dayIndex] = totalToday;
+        updated[existingWeekIdx] = { ...updated[existingWeekIdx], dailyCalories: newDaily };
+      } else {
+        // Create new week
+        const newDaily = [0,0,0,0,0,0,0];
+        newDaily[dayIndex] = totalToday;
+        updated = [...updated, { weekStarting: mondayISO, dailyCalories: newDaily }];
       }
-      return filtered;
+
+      return updated;
     });
-  }, []);
+  }, [logs]);
 
   // Reset logic
   useEffect(() => {
@@ -227,29 +254,6 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('nutritrack_weekly_stats', JSON.stringify(weeklyStats));
   }, [weeklyStats]);
-
-  // Update current day's stats when logs change
-  useEffect(() => {
-    const totalToday = logs.reduce((acc, log) => acc + log.calories, 0);
-    const now = new Date();
-    const dayIndex = (now.getDay() + 6) % 7; // 0=Mon, 6=Sun
-
-    const day = now.getDay();
-    const diff = now.getDate() - day + (day === 0 ? -6 : 1);
-    const monday = new Date(now.setDate(diff));
-    const mondayISO = monday.toISOString().split('T')[0];
-
-    setWeeklyStats(prev => {
-      return prev.map(stat => {
-        if (stat.weekStarting === mondayISO) {
-          const newDaily = [...stat.dailyCalories];
-          newDaily[dayIndex] = totalToday;
-          return { ...stat, dailyCalories: newDaily };
-        }
-        return stat;
-      });
-    });
-  }, [logs]);
 
   // App-wide dark mode state & persistence
   const [darkMode, setDarkMode] = useState<boolean>(() => {

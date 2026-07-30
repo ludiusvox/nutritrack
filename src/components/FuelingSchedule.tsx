@@ -166,7 +166,7 @@ export default function FuelingSchedule({
 
       <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6 pb-24 safe-area-x">
 
-        {/* Calorie Goal Input (Always on top of sub-views) */}
+        {/* Top Controls: Goal and Timers */}
         <div className="space-y-3">
           <div className="bg-[#16161a] border border-[#222228] p-3 rounded-xl flex items-center justify-between">
             <div className="flex items-center space-x-2">
@@ -356,35 +356,54 @@ export default function FuelingSchedule({
           <div className="space-y-6">
              <h2 className="text-xs font-bold tracking-wider text-gray-500 uppercase">Weekly Calorie Performance</h2>
 
-             {[...weeklyStats].sort((a, b) => new Date(b.weekStarting).getTime() - new Date(a.weekStarting).getTime()).map((stat, idx) => (
-               <div key={idx} className="bg-[#16161a] border border-[#222228] p-5 rounded-2xl space-y-5">
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs font-bold text-white">Week of {new Date(stat.weekStarting).toLocaleDateString()}</span>
-                    <span className="text-[10px] text-sky-400 font-mono font-bold">AVG: {Math.round(stat.dailyCalories.reduce((a,b)=>a+b,0)/7)} kcal</span>
-                  </div>
+             {[...weeklyStats].sort((a, b) => {
+                 const [yA, mA, dA] = a.weekStarting.split('-').map(Number);
+                 const [yB, mB, dB] = b.weekStarting.split('-').map(Number);
+                 return new Date(yB, mB-1, dB).getTime() - new Date(yA, mA-1, dA).getTime();
+             }).map((stat, idx) => {
+               const [y, m, d] = stat.weekStarting.split('-').map(Number);
+               const displayDate = new Date(y, m-1, d).toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' });
 
-                  <div className="flex items-end justify-between h-32 px-2">
-                    {stat.dailyCalories.map((cal, i) => {
-                        const height = Math.min(100, (cal / 3000) * 100);
-                        const isHigh = cal > fastingConfig.dailyCalorieGoal;
-                        return (
-                            <div key={i} className="flex flex-col items-center space-y-2 group relative">
-                                <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-[#1c1c24] text-[9px] text-white px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                                    {cal}
+               return (
+                 <div key={idx} className="bg-[#16161a] border border-[#222228] p-5 rounded-2xl space-y-5">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs font-bold text-white">Week of {displayDate}</span>
+                      <span className="text-[10px] text-sky-400 font-mono font-bold">AVG: {Math.round(stat.dailyCalories.reduce((a,b)=>a+b,0)/7)} kcal</span>
+                    </div>
+
+                    <div className="flex items-end justify-between h-40 px-2 pt-8">
+                        {stat.dailyCalories.map((cal, i) => {
+                            const goal = fastingConfig.dailyCalorieGoal || 2500;
+                            const height = Math.min(100, (cal / Math.max(goal, 3000)) * 100);
+                            const isHigh = cal > goal;
+
+                            return (
+                                <div key={i} className="flex flex-col items-center justify-end h-full w-8 group relative">
+                                    <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-[#1c1c24] text-[9px] text-white px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity z-10 whitespace-nowrap shadow-xl border border-[#222228]">
+                                        {cal} kcal
+                                    </div>
+
+                                    <div className="flex-1 w-full flex items-end justify-center mb-2">
+                                        <div
+                                            className={`w-4 rounded-t-md transition-all duration-700 ease-out ${
+                                                cal > 0
+                                                    ? (isHigh ? 'bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.3)]' : 'bg-sky-500 shadow-[0_0_10px_rgba(14,165,233,0.3)]')
+                                                    : 'bg-neutral-800/20'
+                                            }`}
+                                            style={{ height: cal > 0 ? `${Math.max(5, height)}%` : '2px' }}
+                                        />
+                                    </div>
+
+                                    <span className="text-[9px] text-gray-500 font-bold uppercase tracking-tighter">
+                                        {['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][i]}
+                                    </span>
                                 </div>
-                                <div
-                                    className={`w-6 rounded-t-md transition-all duration-500 ${isHigh ? 'bg-[#f97316]/60 hover:bg-[#f97316]' : 'bg-sky-500/40 hover:bg-sky-500'}`}
-                                    style={{ height: `${height}%` }}
-                                />
-                                <span className="text-[8px] text-gray-500 font-bold">
-                                    {['M','T','W','T','F','S','S'][i]}
-                                </span>
-                            </div>
-                        );
-                    })}
-                  </div>
-               </div>
-             ))}
+                            );
+                        })}
+                    </div>
+                 </div>
+               );
+             })}
           </div>
         )}
       </div>
