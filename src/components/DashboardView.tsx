@@ -16,6 +16,7 @@ interface DashboardViewProps {
   darkMode: boolean;
   setDarkMode: (val: boolean) => void;
   onOpenSidebar: () => void;
+  targetCalories: number;
 }
 
 export default function DashboardView({
@@ -26,13 +27,13 @@ export default function DashboardView({
   onOpenSyncSettings,
   darkMode,
   setDarkMode,
-  onOpenSidebar
+  onOpenSidebar,
+  targetCalories
 }: DashboardViewProps) {
-  // Targets
-  const targetCalories = 2500;
-  const targetFat = 80;
-  const targetCarbs = 300;
-  const targetProtein = 150;
+  // Targets based on 48% Carbs, 24% Protein, 28% Fat split
+  const targetFat = Math.round((targetCalories * 0.28) / 9);
+  const targetCarbs = Math.round((targetCalories * 0.48) / 4);
+  const targetProtein = Math.round((targetCalories * 0.24) / 4);
 
   // Real-time calculated statistics
   const totalCalories = logs.reduce((acc, item) => acc + item.calories, 0);

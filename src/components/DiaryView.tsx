@@ -21,10 +21,10 @@ export default function DiaryView({ logs, onDeleteLog, targetCalories = 2500, on
   const [exported, setExported] = useState(false);
   const [exportModal, setExportModal] = useState(false);
 
-  // Targets
-  const targetCarbs = 300;
-  const targetProtein = 150;
-  const targetFat = 80;
+  // Targets based on 48% Carbs, 24% Protein, 28% Fat split
+  const targetCarbs = Math.round((targetCalories * 0.48) / 4);
+  const targetProtein = Math.round((targetCalories * 0.24) / 4);
+  const targetFat = Math.round((targetCalories * 0.28) / 9);
 
   // Actual logs totals
   const totalCalories = logs.reduce((acc, item) => acc + item.calories, 0);

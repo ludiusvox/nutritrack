@@ -1,0 +1,6 @@
+{
+  "name": "NutriTrack",
+  "description": "Photography-first nutrition calculator, food journal, Mifflin-St Jeor BMR/TDEE calculator, body fat index, and workout calendar synchronizer.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

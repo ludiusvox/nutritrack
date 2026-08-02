@@ -76,6 +76,7 @@ export const INITIAL_ACTIVITIES: Activity[] = [
   {
     id: 'a1',
     time: '6:00 AM',
+    date: new Date().toISOString().split('T')[0],
     name: 'Weightlifting',
     durationMin: 60,
     type: 'weightlifting',
@@ -85,12 +86,31 @@ export const INITIAL_ACTIVITIES: Activity[] = [
   {
     id: 'a2',
     time: '5:00 PM',
+    date: new Date().toISOString().split('T')[0],
     name: 'Biking',
     durationMin: 120, // 2h total with running or miles
     distance: '15 miles',
     type: 'biking',
     presetPreLoad: '+50g Carb',
     presetPostLoad: '+40g Carb, Electrolytes'
+  }
+];
+
+export const INITIAL_FASTING_CONFIG: any = {
+  mode: 'none',
+  startHour: 12,
+  endHour: 20,
+  dailyCalorieGoal: 2500
+};
+
+export const INITIAL_WEEKLY_STATS: any[] = [
+  {
+    weekStarting: '2026-06-08',
+    dailyCalories: [2100, 2400, 1800, 2500, 2200, 2600, 1900]
+  },
+  {
+    weekStarting: '2026-06-15',
+    dailyCalories: [2300, 2100, 2500, 2000, 2400, 2200, 2500]
   }
 ];
 
