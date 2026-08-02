@@ -72,19 +72,37 @@ export default function App() {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   };
 
+  // Maintenance: Local Time Reset Fix and Stats update
   useEffect(() => {
     const now = new Date();
+    const todayISO = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+    // 1. Auto-Reset Diary if it's a new day (Local Time)
+    setLogs(prev => {
+        const filtered = prev.filter(log => {
+            const logDate = log.timestamp.split('T')[0];
+            return logDate === todayISO;
+        });
+        // If we filtered anything, it means a reset happened
+        return filtered;
+    });
+
+    // 2. Update Statistics
     const oneMonthAgo = new Date();
     oneMonthAgo.setDate(oneMonthAgo.getDate() - 30);
     const mondayISO = getMondayISO(now);
-    const dayIndex = (now.getDay() + 6) % 7;
-    const totalToday = logs.reduce((acc, log) => acc + log.calories, 0);
+    const dayIndex = (now.getDay() + 6) % 7; // 0=Mon, 6=Sun
+    const totalToday = logs.reduce((acc, log) => {
+        const logDate = log.timestamp.split('T')[0];
+        return logDate === todayISO ? acc + log.calories : acc;
+    }, 0);
 
     setWeeklyStats(prev => {
       let updated = prev.filter(stat => {
           const [y, m, d] = stat.weekStarting.split('-').map(Number);
           return new Date(y, m - 1, d) >= oneMonthAgo;
       });
+
       const existingIdx = updated.findIndex(s => s.weekStarting === mondayISO);
       if (existingIdx !== -1) {
         const newDaily = [...updated[existingIdx].dailyCalories];
