@@ -2,24 +2,16 @@
   <img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play" width="200">
 </a>
 
-
-<<<<<<< Updated upstream
-# 📸 NutriTrack - Tactical Nutrition & Athletic Performance Dashboard
-
-> A comprehensive diagnostic suite for tactical athletes, combining high-precision macro/stimulant tracking with doctrinal performance fueling strategies. Powered by computer vision analysis and baseline metabolic modeling.
-=======
 <div align="center">
 <img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
 </div>
 
-# Run and deploy your AI Studio app
->>>>>>> Stashed changes
+# 📸 NutriTrack - Tactical Nutrition & Athletic Performance Dashboard
 
-This contains everything you need to run your app locally.
+> A comprehensive diagnostic suite for tactical athletes, combining high-precision macro/stimulant tracking with doctrinal performance fueling strategies. Powered by computer vision analysis and baseline metabolic modeling.
 
-View your app in AI Studio: https://ai.studio/apps/1ece2d33-d80b-4de8-8a3d-b7996914ac2b
+---
 
-<<<<<<< Updated upstream
 ## ✨ Full Feature Architecture
 
 ### 🛡️ Diagnostic Core
@@ -28,19 +20,25 @@ View your app in AI Studio: https://ai.studio/apps/1ece2d33-d80b-4de8-8a3d-b7996
 - **US Navy Body Fat % Estimator**: Circumference-based adiposity assessment for tracking body composition changes.
 - **Concentric Daily Summary Rings**: Real-time visual telemetry of Fat, Carb, and Protein saturation relative to performance targets.
 
+### ⚡ Performance & Training Plan (New in v1.28/v1.29)
+- **Redesigned Training Plan**: Centralized hub for scheduling **Weightlifting, Biking, and Running** activities.
+- **Fasting Protocols**: Integrated support for **5/2 and 16/8** intermittent fasting schedules.
+- **Dynamic Nutrient Scaling**: Real-time calorie synchronization and scaling of Pre-Load/Post-Load carb and protein requirements based on your specific daily goal.
+- **Advanced Stats Visualization**: High-precision weekly caloric averaging charts with localized calendar logic to ensure accuracy across time zones.
+
 ### ⚡ Performance & Stimulant Tracking
 - **Dual Stimulant Matrix**: Dedicated tracking for **Caffeine (mg)** and **Nicotine (mg)** to monitor cognitive load and autonomic nervous system stress.
 - **Macro Tweak Calculator**: Real-time calorie synchronization based on 9/4/4 cal/gram thermodynamic constants.
-- **Daily Journal & Diary**: Comprehensive log history with meal categorization (Breakfast, Lunch, Dinner, Snacks).
+- **Daily Journal & Diary**: Comprehensive log history with automated local-time midnight resets for "Foundational" discipline.
 
 ### 📅 Tactical Scheduling & Export
-- **Fueling Schedule & Weekly Sync**: Managed event-based fueling (Weightlifting, Biking, Running) with specific Pre-Load and Post-Load nutrient instructions.
+- **Fueling Schedule & Weekly Sync**: Managed event-based fueling with specific nutrient instructions.
 - **Double-Ladder "W" Procedure**: Built-in rep-scheme reference (5-4-3-2-1-2-3-4-5) for high-density power maintenance training.
-- **Diagnostics Compiler**: Export formatted **Markdown Reports** or **CSV Logs** directly to local storage or shared platforms.
-- **Calendar Synchronization**: Integration settings for Google, iCloud, and Outlook calendars with Carb Load note export.
+- **Diagnostics Compiler**: Export formatted **Markdown Reports** or **CSV Logs** directly to local storage.
+- **Calendar Synchronization**: Integration for Google, iCloud, and Outlook calendars with Carb Load note export.
 
 ### 🏗️ Technical Specifications
-- **Automatic Midnight Reset**: Force-reset of daily totals at 00:00 local time to ensure "Foundational (Proactive)" nutrition discipline.
+- **Automatic Local Reset**: Force-reset of daily totals at 00:00 local time (v1.29) to ensure proactive nutrition discipline.
 - **Client-Side Security**: All diagnostics run strictly on-device to prevent unauthorized server leaks of biometric or nutritional records.
 - **Native Waydroid Support**: Optimized for high-performance execution on Fedora and other Linux environments via Waydroid.
 
@@ -56,13 +54,9 @@ NutriTrack is architected upon the latest doctrinal standards for tactical athle
 *Source: Essentials of Tactical Strength and Conditioning (TSAC)*
 > "Tactical athletes cannot be lumped into a single group... each tactical athlete’s demands are based on incredibly different job functions. Therefore, it is important to treat each athlete as an individual when it comes to thinking through nutrition needs."
 
-> "Employing optimal nutritional strategies in conjunction with good sleep hygiene can mitigate the deleterious effects of deployment and shift work on performance."
-
 #### **U.S. Army Manual FM 7-22**
 *Source: Holistic Health and Fitness (H2F), Chapter 8: Nutritional Readiness*
 > "**Nutritional readiness** is the ability to recognize, select, and consume the requisite food and drink to meet the physical and nonphysical demands of any duty or combat position, accomplish the mission and come home healthy."
-
-> "**Proactive nutrition** provides the foundation for baseline health and homeostasis... the proactive prevention of nutrition deficiency, chronic disease, and immune system compromise."
 
 ---
 
@@ -80,19 +74,18 @@ waydroid app install android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
 ### Development Environment
-```bash
-npm install
-npm run dev   # Local Web View
-npm run build # Production Compilation
-npx cap sync  # Sync Native Assets
-```
-
----
-
-## 🧮 Thermodynamic Constants
-- **Fat**: 9 kcal/g
-- **Carbohydrates**: 4 kcal/g
-- **Protein**: 4 kcal/g
+1.  **Install dependencies**:
+    ```bash
+    npm install
+    ```
+2.  **API Configuration**:
+    Set your `GEMINI_API_KEY` in `.env.local` to enable computer vision meal analysis.
+3.  **Run Locally**:
+    ```bash
+    npm run dev   # Local Web View
+    npm run build # Production Compilation
+    npx cap sync  # Sync Native Assets
+    ```
 
 ---
 
@@ -104,15 +97,3 @@ npx cap sync  # Sync Native Assets
 <p align="center">
   <i>"Accomplish the mission and come home healthy." — FM 7-22</i>
 </p>
-=======
-## Run Locally
-
-**Prerequisites:**  Node.js
-
-
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
->>>>>>> Stashed changes
