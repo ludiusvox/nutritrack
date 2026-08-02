@@ -384,11 +384,16 @@ export default function TrainingPlan({
                const [y, m, d] = stat.weekStarting.split('-').map(Number);
                const displayDate = new Date(y, m-1, d).toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' });
 
+               const loggedDays = stat.dailyCalories.filter(cal => cal > 0);
+               const weekAvg = loggedDays.length > 0
+                 ? Math.round(loggedDays.reduce((a, b) => a + b, 0) / loggedDays.length)
+                 : 0;
+
                return (
                  <div key={idx} className="bg-[#16161a] border border-[#222228] p-5 rounded-2xl space-y-5">
                     <div className="flex justify-between items-center">
                       <span className="text-xs font-bold text-white">Week of {displayDate}</span>
-                      <span className="text-[10px] text-sky-400 font-mono font-bold">AVG: {Math.round(stat.dailyCalories.reduce((a,b)=>a+b,0)/7)} kcal</span>
+                      <span className="text-[10px] text-sky-400 font-mono font-bold">AVG: {weekAvg} kcal</span>
                     </div>
 
                     <div className="flex items-end justify-between h-40 px-2 pt-8">
