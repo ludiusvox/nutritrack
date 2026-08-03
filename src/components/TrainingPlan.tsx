@@ -39,6 +39,7 @@ export default function TrainingPlan({
   const [calorieGoal, setCalorieGoal] = useState(fastingConfig.dailyCalorieGoal.toString());
   const [dailyResetTime, setDailyResetTime] = useState('');
   const [weeklyResetTime, setWeeklyResetTime] = useState('');
+  const [fastingTimer, setFastingTimer] = useState({ label: 'Window starts in', time: '' });
 
   // Scaling Recommendations based on Goal
   const goalNum = parseInt(calorieGoal) || 2500;
@@ -49,12 +50,40 @@ export default function TrainingPlan({
   useEffect(() => {
     const updateCountdowns = () => {
       const now = new Date();
+
+      // Daily Reset (Midnight)
       const tomorrow = new Date(now);
       tomorrow.setHours(24, 0, 0, 0);
       const diffDaily = tomorrow.getTime() - now.getTime();
       const hDaily = Math.floor(diffDaily / (1000 * 60 * 60));
       const mDaily = Math.floor((diffDaily % (1000 * 60 * 60)) / (1000 * 60));
       setDailyResetTime(`${hDaily}h ${mDaily}m`);
+
+      // Fasting Window Logic - Fix 12-hour offset by targeting startHour
+      const startHour = fastingConfig.startHour || 12;
+      const endHour = fastingConfig.endHour || 20;
+      const currentHour = now.getHours();
+
+      if (currentHour >= startHour && currentHour < endHour) {
+          // Currently inside the eating window
+          const end = new Date(now);
+          end.setHours(endHour, 0, 0, 0);
+          const diff = end.getTime() - now.getTime();
+          const h = Math.floor(diff / (1000 * 60 * 60));
+          const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+          setFastingTimer({ label: 'Window ends in', time: `${h}h ${m}m` });
+      } else {
+          // Outside the eating window
+          const nextStart = new Date(now);
+          if (currentHour >= endHour) {
+              nextStart.setDate(nextStart.getDate() + 1);
+          }
+          nextStart.setHours(startHour, 0, 0, 0);
+          const diff = nextStart.getTime() - now.getTime();
+          const h = Math.floor(diff / (1000 * 60 * 60));
+          const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+          setFastingTimer({ label: 'Window starts in', time: `${h}h ${m}m` });
+      }
 
       const lastResetStr = localStorage.getItem('nutritrack_last_reset');
       const lastReset = lastResetStr ? new Date(lastResetStr) : now;
@@ -252,6 +281,12 @@ export default function TrainingPlan({
                       <input type="number" value={duration} onChange={e => setDuration(parseInt(e.target.value)||0)} className="w-full bg-[#0a0a0c] border border-[#222228] rounded-lg p-2 text-sm text-white" />
                     </div>
                  </div>
+                 <div className="grid grid-cols-1 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-gray-500 uppercase font-bold">Start Time</label>
+                      <input type="time" value={time} onChange={e => setTime(e.target.value)} className="w-full bg-[#0a0a0c] border border-[#222228] rounded-lg p-2 text-sm text-white" />
+                    </div>
+                 </div>
 
                  <div className="p-3 bg-blue-500/5 rounded-lg border border-blue-500/10">
                     <span className="text-[10px] text-blue-400 uppercase font-bold block mb-1">Recommended Scaled Loadouts</span>
@@ -275,7 +310,7 @@ export default function TrainingPlan({
                         </div>
                         <div>
                         <h4 className="font-bold text-white text-sm">{act.name}</h4>
-                        <p className="text-[10px] text-gray-500 font-mono">{act.date} • {act.durationMin} min</p>
+                        <p className="text-[10px] text-gray-500 font-mono">{act.date} @ {act.time} • {act.durationMin} min</p>
                         </div>
                     </div>
                     <button onClick={() => onDeleteActivity(act.id)} className="opacity-0 group-hover:opacity-100 p-1.5 text-red-500 hover:bg-red-500/10 rounded-lg transition-all">
@@ -346,12 +381,14 @@ export default function TrainingPlan({
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
                        <span className="text-xs font-semibold text-gray-400">Daily Eating Window</span>
-                       <span className="text-xs font-mono font-bold text-[#a855f7]">12:00 PM - 8:00 PM</span>
+                       <span className="text-xs font-mono font-bold text-[#a855f7]">
+                           {fastingConfig.startHour > 12 ? fastingConfig.startHour - 12 : fastingConfig.startHour}:00 {fastingConfig.startHour >= 12 ? 'PM' : 'AM'} - {fastingConfig.endHour > 12 ? fastingConfig.endHour - 12 : fastingConfig.endHour}:00 {fastingConfig.endHour >= 12 ? 'PM' : 'AM'}
+                       </span>
                     </div>
                     <div className="h-2 bg-[#2a2a35] rounded-full overflow-hidden flex">
-                       <div className="w-[50%] h-full bg-neutral-800" />
-                       <div className="w-[33%] h-full bg-[#a855f7]" />
-                       <div className="w-[17%] h-full bg-neutral-800" />
+                       <div style={{ width: `${(fastingConfig.startHour / 24) * 100}%` }} className="h-full bg-neutral-800" />
+                       <div style={{ width: `${((fastingConfig.endHour - fastingConfig.startHour) / 24) * 100}%` }} className="h-full bg-[#a855f7]" />
+                       <div style={{ width: `${((24 - fastingConfig.endHour) / 24) * 100}%` }} className="h-full bg-neutral-800" />
                     </div>
                     <div className="flex justify-between text-[10px] text-gray-500 font-mono">
                        <span>00:00</span>
@@ -363,7 +400,7 @@ export default function TrainingPlan({
                   <div className="p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-xl flex items-start space-x-3">
                     <Clock className="w-4 h-4 text-emerald-500 mt-0.5" />
                     <p className="text-xs text-gray-400">
-                      Current Window starts in <strong className="text-white">{dailyResetTime}</strong>. Keep hydration high during the morning fast.
+                      {fastingTimer.label} <strong className="text-white">{fastingTimer.time}</strong>. Keep hydration high during the morning fast.
                     </p>
                   </div>
                 </>
