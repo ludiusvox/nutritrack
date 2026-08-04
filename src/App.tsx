@@ -83,8 +83,13 @@ export default function App() {
             const logDate = log.timestamp.split('T')[0];
             return logDate === todayISO;
         });
-        // If we filtered anything, it means a reset happened
-        return filtered;
+
+        // BUG FIX: Only trigger state update if logs were actually removed (meaning it's a new day)
+        // Previous logic caused a loop that cleared today's food as soon as they were added.
+        if (filtered.length !== prev.length) {
+            return filtered;
+        }
+        return prev;
     });
 
     // 2. Update Statistics
