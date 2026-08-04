@@ -35,7 +35,7 @@ View your app in AI Studio: https://ai.studio/apps/1ece2d33-d80b-4de8-8a3d-b7996
 
 ### 📅 Tactical Scheduling & Export
 - **Fueling Schedule & Weekly Sync**: Managed event-based fueling (Weightlifting, Biking, Running) with specific Pre-Load and Post-Load nutrient instructions.
-- **Double-Ladder "W" Procedure**: Built-in rep-scheme reference (5-4-3-2-1-2-3-4-5) for high-density power maintenance training.
+- **12/8 and 5/2 Intermittant Fasting and Monthly Food Calendar**: Monthly food calendar and fasting schedule for either option.
 - **Diagnostics Compiler**: Export formatted **Markdown Reports** or **CSV Logs** directly to local storage or shared platforms.
 - **Calendar Synchronization**: Integration settings for Google, iCloud, and Outlook calendars with Carb Load note export.
 
