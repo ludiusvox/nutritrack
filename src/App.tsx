@@ -69,23 +69,29 @@ export default function App() {
     const day = d.getDay();
     const diff = d.getDate() - day + (day === 0 ? -6 : 1);
     d.setDate(diff);
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    return d.toISOString().split('T')[0];
+  };
+
+  const getLocalDateISO = (date: Date) => {
+    if (!date || isNaN(date.getTime())) return "";
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
   };
 
   // Maintenance: Local Time Reset Fix and Stats update
   useEffect(() => {
     const now = new Date();
-    const todayISO = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const todayISO = getLocalDateISO(now);
 
     // 1. Auto-Reset Diary if it's a new day (Local Time)
     setLogs(prev => {
         const filtered = prev.filter(log => {
-            const logDate = log.timestamp.split('T')[0];
+            const logDate = getLocalDateISO(new Date(log.timestamp));
             return logDate === todayISO;
         });
 
-        // BUG FIX: Only trigger state update if logs were actually removed (meaning it's a new day)
-        // Previous logic caused a loop that cleared today's food as soon as they were added.
         if (filtered.length !== prev.length) {
             return filtered;
         }
@@ -98,7 +104,7 @@ export default function App() {
     const mondayISO = getMondayISO(now);
     const dayIndex = (now.getDay() + 6) % 7; // 0=Mon, 6=Sun
     const totalToday = logs.reduce((acc, log) => {
-        const logDate = log.timestamp.split('T')[0];
+        const logDate = getLocalDateISO(new Date(log.timestamp));
         return logDate === todayISO ? acc + log.calories : acc;
     }, 0);
 
@@ -154,7 +160,7 @@ export default function App() {
           ) : (
             <>
               {activeTab === 'dashboard' && <DashboardView logs={logs} onDeleteLog={id => setLogs(l => l.filter(x=>x.id!==id))} darkMode={darkMode} setDarkMode={setDarkMode} onOpenSidebar={() => setShowSidebar(true)} onOpenSyncSettings={() => setShowSyncSettings(true)} targetCalories={fastingConfig.dailyCalorieGoal} onNavigateToTab={t => setActiveTab(t as any)} onOpenBodyFat={() => {setActiveTab('calcs'); setCalcSubMode('bodyfat');}} />}
-              {activeTab === 'camera' && <CameraView onAddLog={e => setLogs(l => [{...e, id:Date.now().toString(), timestamp:new Date().toISOString()}, ...l])} onBack={() => setActiveTab('dashboard')} onOpenSidebar={() => setShowSidebar(true)} />}
+              {activeTab === 'camera' && <CameraView onAddLog={e => setLogs(l => [{...e, id:Date.now().toString(), timestamp: new Date().toISOString()}, ...l])} onBack={() => setActiveTab('dashboard')} onOpenSidebar={() => setShowSidebar(true)} />}
               {activeTab === 'diary' && <DiaryView logs={logs} onDeleteLog={id => setLogs(l => l.filter(x=>x.id!==id))} targetCalories={fastingConfig.dailyCalorieGoal} onOpenSidebar={() => setShowSidebar(true)} />}
               {activeTab === 'schedule' && <TrainingPlan activities={activities} syncSettings={INITIAL_SYNC_SETTINGS} onOpenSyncSettings={() => setShowSyncSettings(true)} onAddActivity={e => setActivities(a => [...a, {...e, id:Date.now().toString()}])} onDeleteActivity={id => setActivities(a => a.filter(x=>x.id!==id))} onOpenSidebar={() => setShowSidebar(true)} fastingConfig={fastingConfig} setFastingConfig={setFastingConfig} weeklyStats={weeklyStats} setWeeklyStats={setWeeklyStats} />}
               {activeTab === 'calcs' && <div className="flex flex-col h-full bg-[#0a0a0c]"><div className="px-4 pt-3 pb-1 border-b border-[#222228] bg-[#121216] flex space-x-1.5"><button onClick={() => setCalcSubMode('mifflin')} className={`flex-1 py-1.5 text-xs font-bold rounded-lg ${calcSubMode === 'mifflin' ? 'bg-[#f97316]/20 text-[#f97316]' : 'text-gray-400'}`}>Mifflin BMR</button><button onClick={() => setCalcSubMode('bodyfat')} className={`flex-1 py-1.5 text-xs font-bold rounded-lg ${calcSubMode === 'bodyfat' ? 'bg-[#f97316]/20 text-[#f97316]' : 'text-gray-400'}`}>US Navy Fat %</button></div>{calcSubMode === 'mifflin' ? <MifflinCalculator initialInputs={INITIAL_MIFFLIN_INPUTS} onClose={() => setActiveTab('dashboard')} /> : <BodyFatCalculator initialInputs={INITIAL_BODY_FAT_INPUTS} onBack={() => setCalcSubMode('mifflin')} />}</div>}
