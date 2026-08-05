@@ -74,10 +74,20 @@ export default function App() {
 
   const getLocalDateISO = (date: Date) => {
     if (!date || isNaN(date.getTime())) return "";
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, '0');
-    const d = String(date.getDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
+    const tz = fastingConfig.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+    try {
+        const formatter = new Intl.DateTimeFormat('en-US', {
+            timeZone: tz,
+            year: 'numeric', month: '2-digit', day: '2-digit',
+            hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+        });
+        const parts = formatter.formatToParts(date);
+        const p: any = {};
+        parts.forEach(({type, value}) => p[type] = value);
+        return `${p.year}-${p.month}-${p.day}`;
+    } catch (e) {
+        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    }
   };
 
   // Maintenance: Local Time Reset Fix and Stats update

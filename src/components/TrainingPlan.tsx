@@ -3,9 +3,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
-import { Calendar, Dumbbell, Bike, Plus, Trash2, RotateCcw, Menu, BarChart2, Zap, Clock, Save, Info, ChevronRight } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Calendar, Dumbbell, Bike, Plus, Trash2, RotateCcw, Menu, BarChart2, Zap, Clock, Save, Info, ChevronRight, Globe } from 'lucide-react';
 import { Activity, FastingConfig, WeeklyCalorieStats } from '../types';
+
+const COMMON_TIMEZONES = [
+  "America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles",
+  "America/Phoenix", "America/Anchorage", "America/Honolulu",
+  "Europe/London", "Europe/Paris", "Europe/Berlin", "Europe/Moscow",
+  "Asia/Tokyo", "Asia/Shanghai", "Asia/Dubai", "Asia/Singapore",
+  "Australia/Sydney", "Pacific/Auckland", "UTC"
+];
 
 interface TrainingPlanProps {
   activities: Activity[];
@@ -47,9 +55,29 @@ export default function TrainingPlan({
   const scaledPostCarb = Math.round(goalNum / 50);
   const scaledPostProt = Math.round(goalNum / 100);
 
+  // Helper to get "now" in the configured timezone
+  const getNowInTimezone = () => {
+    const tz = fastingConfig.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const now = new Date();
+    try {
+        const formatter = new Intl.DateTimeFormat('en-US', {
+            timeZone: tz,
+            year: 'numeric', month: 'numeric', day: 'numeric',
+            hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false
+        });
+        const parts = formatter.formatToParts(now);
+        const p: any = {};
+        parts.forEach(({type, value}) => p[type] = value);
+        return new Date(p.year, p.month - 1, p.day, p.hour % 24, p.minute, p.second);
+    } catch (e) {
+        console.error("Timezone error:", e);
+        return now;
+    }
+  };
+
   useEffect(() => {
     const updateCountdowns = () => {
-      const now = new Date();
+      const now = getNowInTimezone();
 
       // Daily Reset (Midnight)
       const tomorrow = new Date(now);
@@ -100,7 +128,7 @@ export default function TrainingPlan({
     updateCountdowns();
     const interval = setInterval(updateCountdowns, 60000);
     return () => clearInterval(interval);
-  }, []);
+  }, [fastingConfig.timezone, fastingConfig.startHour, fastingConfig.endHour]);
 
   const [name, setName] = useState('');
   const [time, setTime] = useState('07:00');
@@ -217,6 +245,27 @@ export default function TrainingPlan({
             <button onClick={handleSaveGoal} className="px-3 py-1.5 bg-[#f97316] text-white rounded-lg text-xs font-bold active:scale-95 transition-all">
               Set
             </button>
+          </div>
+
+          {/* Timezone Selector */}
+          <div className="bg-[#16161a] border border-[#222228] p-3 rounded-xl flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 rounded-lg bg-sky-500/10 flex items-center justify-center border border-sky-500/20">
+                  <Globe className="w-4 h-4 text-sky-400" />
+              </div>
+              <div className="flex-1">
+                  <span className="text-[10px] text-gray-500 uppercase font-bold block">App Timezone</span>
+                  <select
+                    value={fastingConfig.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone}
+                    onChange={(e) => setFastingConfig({ ...fastingConfig, timezone: e.target.value })}
+                    className="bg-transparent border-none text-white text-xs font-mono focus:outline-none w-full max-w-[180px] appearance-none"
+                  >
+                    {COMMON_TIMEZONES.map(tz => (
+                        <option key={tz} value={tz} className="bg-[#16161a]">{tz}</option>
+                    ))}
+                  </select>
+              </div>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3" id="reset-timers-container">

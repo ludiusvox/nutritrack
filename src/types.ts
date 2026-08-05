@@ -34,6 +34,7 @@ export interface FastingConfig {
   startHour: number; // For 16/8 (e.g., 12 for 12 PM)
   endHour: number;   // For 16/8 (e.g., 20 for 8 PM)
   dailyCalorieGoal: number;
+  timezone?: string; // Declarative timezone (e.g., "America/New_York")
 }
 
 export interface WeeklyCalorieStats {

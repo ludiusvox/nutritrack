@@ -100,7 +100,8 @@ export const INITIAL_FASTING_CONFIG: any = {
   mode: 'none',
   startHour: 12,
   endHour: 20,
-  dailyCalorieGoal: 2500
+  dailyCalorieGoal: 2500,
+  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone // Default to auto, but can be overridden
 };
 
 export const INITIAL_WEEKLY_STATS: any[] = [
