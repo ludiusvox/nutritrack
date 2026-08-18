@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { Activity, Camera, Calculator, Award, Sliders } from 'lucide-react';
+import { Activity, Camera, Calculator, Award, Sliders, RotateCcw } from 'lucide-react';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -12,10 +12,11 @@ interface SidebarProps {
   onNavigate: (tab: any) => void;
   onOpenSync: () => void;
   onOpenBodyFat: () => void;
+  onResetStats: () => void;
   activeTab: string;
 }
 
-export default function Sidebar({ isOpen, onClose, onNavigate, onOpenSync, onOpenBodyFat, activeTab }: SidebarProps) {
+export default function Sidebar({ isOpen, onClose, onNavigate, onOpenSync, onOpenBodyFat, onResetStats, activeTab }: SidebarProps) {
   if (!isOpen) return null;
 
   return (
@@ -76,6 +77,14 @@ export default function Sidebar({ isOpen, onClose, onNavigate, onOpenSync, onOpe
             >
               <Sliders className="w-4 h-4 text-blue-400" />
               <span>Sync & Export Settings</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => { if(confirm("Reset all history stats?")) { onResetStats(); onClose(); } }}
+              className="w-full flex items-center space-x-3 text-sm p-3 rounded-xl hover:bg-red-500/10 text-gray-400 hover:text-red-400 transition-all text-left"
+            >
+              <RotateCcw className="w-4 h-4 text-red-500" />
+              <span>Reset Statistics</span>
             </button>
           </div>
         </div>

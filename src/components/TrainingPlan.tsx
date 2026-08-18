@@ -87,6 +87,22 @@ export default function TrainingPlan({
       const mDaily = Math.floor((diffDaily % (1000 * 60 * 60)) / (1000 * 60));
       setDailyResetTime(`${hDaily}h ${mDaily}m`);
 
+      // Weekly Reset (Upcoming Monday at Midnight)
+      const nextWeeklyReset = new Date(now);
+      const currentDay = nextWeeklyReset.getDay(); // 0=Sun, 1=Mon...
+      const daysToMonday = currentDay === 1 ? 7 : (currentDay === 0 ? 1 : 8 - currentDay);
+      nextWeeklyReset.setDate(nextWeeklyReset.getDate() + daysToMonday);
+      nextWeeklyReset.setHours(0, 0, 0, 0);
+
+      const diffWeekly = nextWeeklyReset.getTime() - now.getTime();
+      if (diffWeekly > 0) {
+        const dWeekly = Math.floor(diffWeekly / (1000 * 60 * 60 * 24));
+        const hWeekly = Math.floor((diffWeekly % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        setWeeklyResetTime(`${dWeekly}d ${hWeekly}h`);
+      } else {
+        setWeeklyResetTime('Due now');
+      }
+
       // Fasting Window Logic - Fix 12-hour offset by targeting startHour
       const startHour = fastingConfig.startHour || 12;
       const endHour = fastingConfig.endHour || 20;
@@ -111,18 +127,6 @@ export default function TrainingPlan({
           const h = Math.floor(diff / (1000 * 60 * 60));
           const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
           setFastingTimer({ label: 'Window starts in', time: `${h}h ${m}m` });
-      }
-
-      const lastResetStr = localStorage.getItem('nutritrack_last_reset');
-      const lastReset = lastResetStr ? new Date(lastResetStr) : now;
-      const nextWeeklyReset = new Date(lastReset.getTime() + 7 * 24 * 60 * 60 * 1000);
-      const diffWeekly = nextWeeklyReset.getTime() - now.getTime();
-      if (diffWeekly > 0) {
-        const dWeekly = Math.floor(diffWeekly / (1000 * 60 * 60 * 24));
-        const hWeekly = Math.floor((diffWeekly % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        setWeeklyResetTime(`${dWeekly}d ${hWeekly}h`);
-      } else {
-        setWeeklyResetTime('Due now');
       }
     };
     updateCountdowns();
